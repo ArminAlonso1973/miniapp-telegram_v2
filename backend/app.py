@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 import logging
 import requests
 import unicodedata
-
+from typing import List, Dict  # Añade esta línea
 
 
 
@@ -43,6 +43,50 @@ async def consultar_llm_respuesta_final(prompt: str) -> str:
     # Respuesta simulada del LLM (mock)
     return "Respuesta simulada del LLM"
 
+def buscar_respuestas_arango_mock(pregunta: str) -> List[Dict[str, str]]:
+    """Simula la búsqueda en ArangoDB y retorna datos mock."""
+    mock_data = [
+        {
+            "_key": "1",
+            "question": "¿Cuál es la tasa de IVA?",
+            "answer": "La tasa general de IVA es del 19%.",
+            "legal_reference": "Artículo 7, Ley de IVA."
+        },
+        {
+            "_key": "2",
+            "question": "¿Qué es la renta líquida imponible?",
+            "answer": "Es el monto sobre el cual se calculan los impuestos.",
+            "legal_reference": "Artículo 31, Ley de la Renta."
+        },
+        {
+            "_key": "3",
+            "question": "¿Qué gastos son deducibles?",
+            "answer": "Son aquellos relacionados directamente con la generación de ingresos.",
+            "legal_reference": "Artículo 33, Ley de la Renta."
+        },
+    ]
+
+    # Simular coincidencia de preguntas con base en palabras clave
+    pregunta_normalizada = normalizar_texto(pregunta)
+    resultados = [
+        doc for doc in mock_data if any(palabra in pregunta_normalizada for palabra in normalizar_texto(doc["question"]).split())
+    ]
+    return resultados
+
+def generar_prompt_completo(pregunta: str, respuestas: List[Dict[str, str]]) -> str:
+    """Genera el prompt final para el LLM basado en la pregunta y respuestas."""
+    prompt = f"Pregunta: {pregunta}\n\nContexto:\n"
+    for idx, respuesta in enumerate(respuestas, 1):
+        prompt += (
+            f"{idx}. Pregunta: {respuesta['question']}\n"
+            f"   Respuesta: {respuesta['answer']}\n"
+            f"   Referencia legal: {respuesta['legal_reference']}\n"
+        )
+    return prompt
+
+
+
+
 @app.route('/consulta-tributaria', methods=['POST'])
 async def consulta_tributaria():
     data = await request.get_json()
@@ -55,8 +99,18 @@ async def consulta_tributaria():
     if not clasificar_pregunta(pregunta):
         return jsonify({"error": "La pregunta no parece ser tributaria. Por favor, formula una pregunta relacionada con impuestos."}), 400
 
-    respuesta = await consultar_llm_respuesta_final(pregunta)
-    return jsonify({"respuesta": respuesta}), 200
+    # Simular consulta a ArangoDB
+    respuestas_arango = buscar_respuestas_arango_mock(pregunta)
+
+    if not respuestas_arango:
+        return jsonify({"error": "No se encontraron datos relevantes para la consulta."}), 404
+
+    # Preparar el prompt para el LLM usando datos simulados
+    prompt = generar_prompt_completo(pregunta, respuestas_arango)
+
+    # Llamar al LLM para obtener la respuesta (mock por ahora)
+    respuesta = await consultar_llm_respuesta_final(prompt)
+    return jsonify({"respuesta": respuesta, "contexto": respuestas_arango}), 200
 
 # Función asíncrona mock que simula la respuesta del LLM
 async def consultar_llm_respuesta_final(prompt: str) -> str:
@@ -71,6 +125,36 @@ async def test_clasificacion():
     return jsonify({"pregunta": pregunta, "es_tributaria": es_tributaria})
 
 
+#operaciones en Arangodb
+def buscar_respuestas_arango_mock(pregunta: str) -> List[Dict[str, str]]:
+    """Simula la búsqueda en ArangoDB y retorna datos mock."""
+    mock_data = [
+        {
+            "_key": "1",
+            "question": "¿Cuál es la tasa de IVA?",
+            "answer": "La tasa general de IVA es del 19%.",
+            "legal_reference": "Artículo 7, Ley de IVA."
+        },
+        {
+            "_key": "2",
+            "question": "¿Qué es la renta líquida imponible?",
+            "answer": "Es el monto sobre el cual se calculan los impuestos.",
+            "legal_reference": "Artículo 31, Ley de la Renta."
+        },
+        {
+            "_key": "3",
+            "question": "¿Qué gastos son deducibles?",
+            "answer": "Son aquellos relacionados directamente con la generación de ingresos.",
+            "legal_reference": "Artículo 33, Ley de la Renta."
+        },
+    ]
+
+    # Simular coincidencia de preguntas con base en palabras clave
+    pregunta_normalizada = normalizar_texto(pregunta)
+    resultados = [
+        doc for doc in mock_data if any(palabra in pregunta_normalizada for palabra in normalizar_texto(doc["question"]).split())
+    ]
+    return resultados
 
 
 
