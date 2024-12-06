@@ -21,10 +21,24 @@ load_dotenv()
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
-#endpoint asistente tributario
-@app.route('/consulta-tributaria', methods=['GET'])
+# Función asíncrona mock que simula la respuesta del LLM
+async def consultar_llm_respuesta_final(prompt: str) -> str:
+    # Aquí en el futuro llamaremos realmente a OpenAI, pero por ahora devolvemos una respuesta simulada.
+    return "Respuesta simulada del LLM"
+
+@app.route('/consulta-tributaria', methods=['POST'])
 async def consulta_tributaria():
-    return jsonify({"status": "ok"})
+    # Esperamos que el frontend envíe un JSON con {"pregunta": "..."} 
+    data = await request.get_json()
+    pregunta = data.get("pregunta")
+
+    if not pregunta:
+        return jsonify({"error": "Falta el campo 'pregunta'"}), 400
+
+    # Obtener respuesta mock del LLM
+    respuesta = await consultar_llm_respuesta_final(pregunta)
+
+    return jsonify({"respuesta": respuesta}), 200
 
 
 @app.route('/test', methods=['GET'])
