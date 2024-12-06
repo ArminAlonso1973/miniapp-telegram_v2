@@ -27,14 +27,18 @@ async def telegram_bot():
     logger.info("Entrando a la ruta /telegram-bot")
     try:
         data = await request.get_json()
-        message = data.get('message')
 
-        if message and 'chat' in message and 'id' in message['chat']:
-            chat_id = message['chat']['id']
-            # Aquí ya tienes el chat_id desde el webhook de Telegram.
-        else:
-            return jsonify({"error": "No se encontró chat_id en la actualización de Telegram"}), 400
+        # Ahora esperamos que el frontend envíe directamente chat_id y message
+        chat_id = data.get('chat_id')
+        message_text = data.get('message')
 
+        if not chat_id:
+            logger.error("No se encontró chat_id en la petición a /telegram-bot.")
+            return jsonify({"error": "Falta 'chat_id'"}), 400
+
+        if not message_text:
+            logger.error("No se encontró message en la petición a /telegram-bot.")
+            return jsonify({"error": "Falta 'message'"}), 400
 
         # Obtener el TOKEN del bot desde .env
         bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -42,23 +46,16 @@ async def telegram_bot():
             logger.error("No se encontró el TOKEN del bot.")
             return jsonify({"error": "No se encontró el TOKEN del bot"}), 500
 
-        if not chat_id:
-            logger.error("No se encontró chat_id en la petición a /telegram-bot.")
-            return jsonify({"error": "Falta 'chat_id'"}), 400
-
-        if not message:
-            logger.error("No se encontró message en la petición a /telegram-bot.")
-            return jsonify({"error": "Falta 'message'"}), 400
-
         send_message_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
         payload = {
             "chat_id": chat_id,
-            "text": message
+            "text": message_text
         }
 
         logger.info(f"Enviando mensaje a Telegram: {payload}")
 
-        # Llamada sincrónica a la API de Telegram (podrías hacerlo asíncrono con aiohttp si lo deseas)
+        # Llamada sincrónica a la API de Telegram
+        import requests
         resp = requests.post(send_message_url, json=payload)
         logger.info(f"Respuesta de Telegram: status_code={resp.status_code}, respuesta={resp.text}")
 
