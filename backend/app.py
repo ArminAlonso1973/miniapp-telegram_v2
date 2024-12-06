@@ -7,6 +7,7 @@ import asyncio
 from werkzeug.utils import secure_filename
 import logging
 import requests
+import unicodedata
 
 
 
@@ -21,24 +22,56 @@ load_dotenv()
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
-# Función asíncrona mock que simula la respuesta del LLM
+
+
+
+
+def normalizar_texto(texto: str) -> str:
+    return unicodedata.normalize('NFKD', texto).encode('ascii', 'ignore').decode('utf-8').lower()
+
+def clasificar_pregunta(pregunta: str) -> bool:
+    palabras_clave = [
+        "impuesto", "deduccion", "renta liquida imponible", "iva",
+        "isr", "empresa", "gastos", "ley", "comercial",
+        "contabilidad", "tributaria", "renta"
+    ]
+    pregunta_normalizada = normalizar_texto(pregunta)
+    logger.debug(f"Pregunta normalizada: {pregunta_normalizada}")
+    return any(palabra in pregunta_normalizada for palabra in palabras_clave)
+
 async def consultar_llm_respuesta_final(prompt: str) -> str:
-    # Aquí en el futuro llamaremos realmente a OpenAI, pero por ahora devolvemos una respuesta simulada.
+    # Respuesta simulada del LLM (mock)
     return "Respuesta simulada del LLM"
 
 @app.route('/consulta-tributaria', methods=['POST'])
 async def consulta_tributaria():
-    # Esperamos que el frontend envíe un JSON con {"pregunta": "..."} 
     data = await request.get_json()
     pregunta = data.get("pregunta")
 
     if not pregunta:
         return jsonify({"error": "Falta el campo 'pregunta'"}), 400
 
-    # Obtener respuesta mock del LLM
-    respuesta = await consultar_llm_respuesta_final(pregunta)
+    # Clasificar la pregunta
+    if not clasificar_pregunta(pregunta):
+        return jsonify({"error": "La pregunta no parece ser tributaria. Por favor, formula una pregunta relacionada con impuestos."}), 400
 
+    respuesta = await consultar_llm_respuesta_final(pregunta)
     return jsonify({"respuesta": respuesta}), 200
+
+# Función asíncrona mock que simula la respuesta del LLM
+async def consultar_llm_respuesta_final(prompt: str) -> str:
+    # Aquí en el futuro llamaremos realmente a OpenAI, pero por ahora devolvemos una respuesta simulada.
+    return "Respuesta simulada del LLM"
+
+@app.route('/test-clasificacion', methods=['POST'])
+async def test_clasificacion():
+    data = await request.get_json()
+    pregunta = data.get('pregunta', '')
+    es_tributaria = clasificar_pregunta(pregunta)
+    return jsonify({"pregunta": pregunta, "es_tributaria": es_tributaria})
+
+
+
 
 
 @app.route('/test', methods=['GET'])
@@ -142,4 +175,6 @@ async def upload_pdf():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001)
+    print("Rutas disponibles:")
+    print(app.url_map)
+    app.run(host='0.0.0.0', port=5001, debug=True)
