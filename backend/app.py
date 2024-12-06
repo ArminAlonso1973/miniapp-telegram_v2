@@ -8,159 +8,86 @@ from werkzeug.utils import secure_filename
 import logging
 import requests
 import unicodedata
-from typing import List, Dict  # Añade esta línea
+from typing import List, Dict 
+from openai import OpenAI
 
 
-
-
-# Configurar logger
+# Configuración del logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Cargar variables de entorno
 load_dotenv()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+
+# Inicializar el cliente OpenAI
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
+
+# Crear la aplicación Quart
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
+# Palabras clave para clasificar preguntas tributarias
+PALABRAS_CLAVE = [
+    "impuesto", "deducción", "renta líquida imponible", "iva", "isr",
+    "empresa", "gastos", "ley", "comercial", "contabilidad", "tributaria", "renta"
+]
 
-
-
-
-def normalizar_texto(texto: str) -> str:
-    return unicodedata.normalize('NFKD', texto).encode('ascii', 'ignore').decode('utf-8').lower()
 
 def clasificar_pregunta(pregunta: str) -> bool:
-    palabras_clave = [
-        "impuesto", "deduccion", "renta liquida imponible", "iva",
-        "isr", "empresa", "gastos", "ley", "comercial",
-        "contabilidad", "tributaria", "renta"
-    ]
-    pregunta_normalizada = normalizar_texto(pregunta)
-    logger.debug(f"Pregunta normalizada: {pregunta_normalizada}")
-    return any(palabra in pregunta_normalizada for palabra in palabras_clave)
+    """Clasifica si la pregunta está relacionada con temas tributarios."""
+    return any(palabra.lower() in pregunta.lower() for palabra in PALABRAS_CLAVE)
 
-async def consultar_llm_respuesta_final(prompt: str) -> str:
-    # Respuesta simulada del LLM (mock)
-    return "Respuesta simulada del LLM"
-
-def buscar_respuestas_arango_mock(pregunta: str) -> List[Dict[str, str]]:
-    """Simula la búsqueda en ArangoDB y retorna datos mock."""
-    mock_data = [
-        {
-            "_key": "1",
-            "question": "¿Cuál es la tasa de IVA?",
-            "answer": "La tasa general de IVA es del 19%.",
-            "legal_reference": "Artículo 7, Ley de IVA."
-        },
-        {
-            "_key": "2",
-            "question": "¿Qué es la renta líquida imponible?",
-            "answer": "Es el monto sobre el cual se calculan los impuestos.",
-            "legal_reference": "Artículo 31, Ley de la Renta."
-        },
-        {
-            "_key": "3",
-            "question": "¿Qué gastos son deducibles?",
-            "answer": "Son aquellos relacionados directamente con la generación de ingresos.",
-            "legal_reference": "Artículo 33, Ley de la Renta."
-        },
-    ]
-
-    # Simular coincidencia de preguntas con base en palabras clave
-    pregunta_normalizada = normalizar_texto(pregunta)
-    resultados = [
-        doc for doc in mock_data if any(palabra in pregunta_normalizada for palabra in normalizar_texto(doc["question"]).split())
-    ]
-    return resultados
-
-def generar_prompt_completo(pregunta: str, respuestas: List[Dict[str, str]]) -> str:
-    """Genera el prompt final para el LLM basado en la pregunta y respuestas."""
-    prompt = f"Pregunta: {pregunta}\n\nContexto:\n"
-    for idx, respuesta in enumerate(respuestas, 1):
-        prompt += (
-            f"{idx}. Pregunta: {respuesta['question']}\n"
-            f"   Respuesta: {respuesta['answer']}\n"
-            f"   Referencia legal: {respuesta['legal_reference']}\n"
+async def consultar_openai(prompt: str) -> Dict:
+    try:
+        # Ejecutar la llamada a OpenAI en un hilo separado
+        response = await asyncio.to_thread(
+            openai_client.chat.completions.create,
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7
         )
-    return prompt
 
+        # Extract the content using the new method
+        respuesta = response.choices[0].message.content
+        return {"respuesta": respuesta}
 
+    except Exception as e:
+        logger.exception(f"Error al consultar OpenAI: {e}")
+        return {"error": "Error al consultar OpenAI"}
 
 
 @app.route('/consulta-tributaria', methods=['POST'])
 async def consulta_tributaria():
-    data = await request.get_json()
-    pregunta = data.get("pregunta")
+    """Endpoint principal para procesar preguntas tributarias."""
+    try:
+        data = await request.get_json()
+        pregunta = data.get("pregunta")
 
-    if not pregunta:
-        return jsonify({"error": "Falta el campo 'pregunta'"}), 400
+        if not pregunta:
+            logger.warning("Solicitud sin el campo 'pregunta'")
+            return jsonify({"error": "Falta el campo 'pregunta'"}), 400
 
-    # Clasificar la pregunta
-    if not clasificar_pregunta(pregunta):
-        return jsonify({"error": "La pregunta no parece ser tributaria. Por favor, formula una pregunta relacionada con impuestos."}), 400
+        # Clasificar la pregunta
+        if not clasificar_pregunta(pregunta):
+            logger.info("Pregunta no clasificada como tributaria")
+            return jsonify({"error": "La pregunta no parece ser tributaria. Por favor, formula una pregunta relacionada con impuestos."}), 400
 
-    # Simular consulta a ArangoDB
-    respuestas_arango = buscar_respuestas_arango_mock(pregunta)
+        # Consultar a OpenAI
+        respuesta = await consultar_openai(pregunta)
+        return jsonify(respuesta), 200
 
-    if not respuestas_arango:
-        return jsonify({"error": "No se encontraron datos relevantes para la consulta."}), 404
-
-    # Preparar el prompt para el LLM usando datos simulados
-    prompt = generar_prompt_completo(pregunta, respuestas_arango)
-
-    # Llamar al LLM para obtener la respuesta (mock por ahora)
-    respuesta = await consultar_llm_respuesta_final(prompt)
-    return jsonify({"respuesta": respuesta, "contexto": respuestas_arango}), 200
-
-# Función asíncrona mock que simula la respuesta del LLM
-async def consultar_llm_respuesta_final(prompt: str) -> str:
-    # Aquí en el futuro llamaremos realmente a OpenAI, pero por ahora devolvemos una respuesta simulada.
-    return "Respuesta simulada del LLM"
-
-@app.route('/test-clasificacion', methods=['POST'])
-async def test_clasificacion():
-    data = await request.get_json()
-    pregunta = data.get('pregunta', '')
-    es_tributaria = clasificar_pregunta(pregunta)
-    return jsonify({"pregunta": pregunta, "es_tributaria": es_tributaria})
-
-
-#operaciones en Arangodb
-def buscar_respuestas_arango_mock(pregunta: str) -> List[Dict[str, str]]:
-    """Simula la búsqueda en ArangoDB y retorna datos mock."""
-    mock_data = [
-        {
-            "_key": "1",
-            "question": "¿Cuál es la tasa de IVA?",
-            "answer": "La tasa general de IVA es del 19%.",
-            "legal_reference": "Artículo 7, Ley de IVA."
-        },
-        {
-            "_key": "2",
-            "question": "¿Qué es la renta líquida imponible?",
-            "answer": "Es el monto sobre el cual se calculan los impuestos.",
-            "legal_reference": "Artículo 31, Ley de la Renta."
-        },
-        {
-            "_key": "3",
-            "question": "¿Qué gastos son deducibles?",
-            "answer": "Son aquellos relacionados directamente con la generación de ingresos.",
-            "legal_reference": "Artículo 33, Ley de la Renta."
-        },
-    ]
-
-    # Simular coincidencia de preguntas con base en palabras clave
-    pregunta_normalizada = normalizar_texto(pregunta)
-    resultados = [
-        doc for doc in mock_data if any(palabra in pregunta_normalizada for palabra in normalizar_texto(doc["question"]).split())
-    ]
-    return resultados
-
-
+    except Exception as e:
+        logger.exception("Error en /consulta-tributaria:")
+        return jsonify({"error": "Error interno del servidor."}), 500
 
 @app.route('/test', methods=['GET'])
 async def test():
-    return jsonify({"status": "success", "message": "API funcionando correctamente"})
+    """Endpoint de prueba para verificar que el backend está funcionando."""
+    logger.info("Endpoint de prueba /test accedido")
+    return jsonify({"status": "success", "message": "API funcionando correctamente"}), 200
+
 
 @app.route('/telegram-bot', methods=['POST'])
 async def telegram_bot():
