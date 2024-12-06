@@ -1,0 +1,436 @@
+backend/services/ClaudeSummarizer.py backend/app.py backend/Dockerfile
+/Users/arminpalma/Documents/Documentos - MacBook Pro de Armin (2)/python/miniapp-telegram_v2/backend/services/ClaudeSummarizer.py
+import os
+import re
+import asyncio
+from typing import List, Dict
+from dotenv import load_dotenv
+from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
+import PyPDF2
+
+class ClaudeSummarizer:
+    def __init__(self, chunk_size: int = 1024, batch_size: int = 4):
+        load_dotenv()  # Cargar las variables de entorno
+        self.client = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+        self.chunk_size = chunk_size
+        self.batch_size = batch_size
+
+
+    async def summarize_chunk(self, chunk: str) -> str:
+        prompt = f"{HUMAN_PROMPT}Resume el siguiente texto capturando los puntos principales de manera concisa:\n\n{chunk}{AI_PROMPT}"
+        try:
+            response = await asyncio.to_thread(
+                self.client.completions.create,
+                model="claude-3-haiku-20240307",
+                prompt=prompt,
+                max_tokens_to_sample=300
+            )
+            return response.completion
+        except Exception as e:
+            print(f"Error al resumir chunk: {e}")
+            return ""
+
+
+    async def summarize_document(self, pdf_path: str) -> Dict[str, str]:
+        # Extracción y procesamiento de texto desde PDF
+        text = await asyncio.to_thread(self.extract_text_from_pdf, pdf_path)
+        clean_text = await asyncio.to_thread(self.preprocess_text, text)
+        chunks = await asyncio.to_thread(self.create_chunks, clean_text)
+
+        summaries = []
+        for i in range(0, len(chunks), self.batch_size):
+            batch = chunks[i:i + self.batch_size]
+            batch_summaries = await asyncio.gather(*[self.summarize_chunk(chunk) for chunk in batch])
+            summaries.extend(batch_summaries)
+
+        final_summary = " ".join(summaries)
+        return {
+            "original_length": len(clean_text),
+            "summary_length": len(final_summary),
+            "summary": final_summary
+        }
+
+    def extract_text_from_pdf(self, pdf_path: str) -> str:
+        text = ""
+        with open(pdf_path, 'rb') as file:
+            reader = PyPDF2.PdfReader(file)
+            for page in reader.pages:
+                text += page.extract_text()
+        return text
+
+    def preprocess_text(self, text: str) -> str:
+        text = re.sub(r'\n+', ' ', text)
+        text = re.sub(r'\s+', ' ', text)
+        text = re.sub(r'[^\w\s.,!?]', '', text)
+        return text.strip()
+
+    def create_chunks(self, text: str) -> List[str]:
+        words = text.split()
+        chunks = []
+        current_chunk = []
+        current_length = 0
+        for word in words:
+            word_length = len(word) + 1
+            if current_length + word_length > self.chunk_size:
+                chunks.append(' '.join(current_chunk))
+                current_chunk = [word]
+                current_length = word_length
+            else:
+                current_chunk.append(word)
+                current_length += word_length
+        if current_chunk:
+            chunks.append(' '.join(current_chunk))
+        return chunks
+
+/Users/arminpalma/Documents/Documentos - MacBook Pro de Armin (2)/python/miniapp-telegram_v2/backend/app.py
+from quart import Quart, request, jsonify
+from quart_cors import cors
+import os
+from dotenv import load_dotenv
+from services.ClaudeSummarizer import ClaudeSummarizer  # Asegúrate de que la ruta sea correcta
+import asyncio
+from werkzeug.utils import secure_filename
+
+
+# Cargar variables de entorno
+load_dotenv()
+
+app = Quart(__name__)
+app = cors(app, allow_origin="*")  # Permitir CORS
+
+# Ruta para verificar estado del servidor
+@app.route('/test', methods=['GET'])
+async def test():
+    return jsonify({"status": "success", "message": "API funcionando correctamente"})
+
+# Asegurarse de que el directorio temporal exista
+os.makedirs('/tmp', exist_ok=True)
+
+@app.route('/telegram-bot', methods=['POST'])
+async def telegram_bot():
+    data = await request.get_json()
+    message = data.get('message')
+    chat_id = data.get('chat_id')
+    
+    # Aquí se llama a la API de Telegram, por ejemplo:
+    # TELEGRAM_BOT_TOKEN debe estar en el .env o en variable de entorno
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not bot_token:
+        return jsonify({"error": "No se encontró el TOKEN del bot"}), 500
+
+    send_message_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": message
+    }
+
+    # Llamada síncrona a la API de Telegram
+    import requests
+    resp = requests.post(send_message_url, json=payload)
+    if resp.status_code == 200:
+        return jsonify({"status": "success"})
+    else:
+        return jsonify({"error": "Error al enviar el mensaje"}), 500
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5001)
+
+/Users/arminpalma/Documents/Documentos - MacBook Pro de Armin (2)/python/miniapp-telegram_v2/backend/Dockerfile
+
+FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+# Actualiza pip antes de instalar las dependencias
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+
+
+
+COPY . .
+
+# Configurar la variable de entorno para Quart
+ENV QUART_APP=app:app
+
+COPY . .
+
+EXPOSE 5001
+
+CMD ["python", "-m", "quart", "run", "--host=0.0.0.0", "--port=5001"]
+
+
+anthropic
+python-dotenv
+PyPDF2
+quart==0.17.0
+quart-cors==0.4.0
+python-telegram-bot==20.7
+werkzeug==2.0.3
+tqdm
+
+
+
+
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "5001:5001"
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "5173:5173"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+/Users/arminpalma/Documents/Documentos - MacBook Pro de Armin (2)/python/miniapp-telegram_v2/frontend/src/components/UploadPDF.tsx
+
+import React, { useState } from 'react';
+
+const UploadPDF = () => {
+  const [file, setFile] = useState<File | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
+      setMessage(null); // Limpiar mensajes anteriores
+      setSummary(null); // Limpiar resumen anterior
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!file) {
+      setMessage("Por favor selecciona un archivo.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setLoading(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/upload-pdf`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setMessage("Archivo procesado exitosamente.");
+        setSummary(data.summary); // Mostrar el resumen
+      } else {
+        setMessage(`Error: ${data.error || 'Error desconocido'}`);
+      }
+    } catch (err) {
+      console.error("Error al conectar con el servidor:", err);
+      setMessage("Error al conectar con el servidor.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <h2>Subir y Resumir PDF</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="file"
+          accept="application/pdf"
+          onChange={handleFileChange}
+          disabled={loading}
+        />
+        <button type="submit" disabled={!file || loading}>
+          {loading ? 'Procesando...' : 'Subir'}
+        </button>
+      </form>
+      {message && <p>{message}</p>}
+      {summary && (
+        <div>
+          <h3>Resumen del Documento:</h3>
+          <p>{summary}</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default UploadPDF;
+
+import { useState, FormEvent, ChangeEvent } from 'react';
+import './App.css';
+import UploadPDF from './components/UploadPDF';
+
+const App = () => {
+  const [message, setMessage] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Variables de entorno
+  const CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID; // Sin fallback
+  const TELEGRAM_BOT_URL = `${import.meta.env.VITE_BACKEND_URL}/telegram-bot`;
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(TELEGRAM_BOT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message,
+          chat_id: CHAT_ID,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Mensaje enviado con éxito!');
+        setMessage('');
+      } else {
+        setError(data.message || 'Error al enviar mensaje');
+      }
+    } catch (err) {
+      setError('Error de conexión con el servidor');
+      console.error('Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMessageChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value);
+  };
+
+  return (
+    <div className="container">
+      <header className="app-header">
+        <h1>Mini App Administrativa</h1>
+      </header>
+
+      <main className="app-main">
+        {/* Telegram Bot Messenger */}
+        <section className="telegram-section">
+          <h2>Telegram Bot Messenger</h2>
+          {error && <div className="error-message">{error}</div>}
+          <form onSubmit={handleSubmit} className="message-form">
+            <textarea
+              value={message}
+              onChange={handleMessageChange}
+              placeholder="Escribe tu mensaje aquí"
+              rows={4}
+              required
+            />
+            <button type="submit" disabled={loading || !message.trim()}>
+              {loading ? 'Enviando...' : 'Enviar Mensaje'}
+            </button>
+          </form>
+        </section>
+
+        {/* Cargar y Resumir PDF */}
+        <section className="pdf-section">
+          <h2>Cargar y Resumir PDF</h2>
+          <UploadPDF />
+        </section>
+      </main>
+
+      <footer className="app-footer">
+        <p>&copy; 2024 Mini App Administrativa - Todos los derechos reservados</p>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
+
+/Users/arminpalma/Documents/Documentos - MacBook Pro de Armin (2)/python/miniapp-telegram_v2/frontend/src/main.tsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+//import './styles/index.css';
+import './index.css';
+import App from './App' 
+
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+  },
+})
+
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src", "vite-env.d.ts"],  // Arreglo combinado
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+
+/Users/arminpalma/Documents/Documentos - MacBook Pro de Armin (2)/python/miniapp-telegram_v2/frontend/vite-env.d.ts
+/// <reference types="vite/client" />
+
+interface ImportMetaEnv {
+    readonly VITE_BACKEND_URL: string;
+    readonly VITE_TELEGRAM_CHAT_ID: string;
+  }
+  
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
+  
+/Users/arminpalma/Documents/Documentos - MacBook Pro de Armin (2)/python/miniapp-telegram_v2/frontend/vite.config.ts
+  import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+  },
+})
