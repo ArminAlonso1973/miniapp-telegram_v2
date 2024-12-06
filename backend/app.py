@@ -9,6 +9,9 @@ import logging
 import requests
 
 
+
+
+
 # Configurar logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -17,6 +20,12 @@ load_dotenv()
 
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
+
+#endpoint asistente tributario
+@app.route('/consulta-tributaria', methods=['GET'])
+async def consulta_tributaria():
+    return jsonify({"status": "ok"})
+
 
 @app.route('/test', methods=['GET'])
 async def test():
@@ -115,6 +124,7 @@ async def upload_pdf():
     except Exception as e:
         logger.exception("Error al procesar el archivo:")
         return jsonify({"error": str(e)}), 500
+
 
 
 if __name__ == '__main__':
