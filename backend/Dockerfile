@@ -4,17 +4,14 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-# Actualiza pip antes de instalar las dependencias
+# Instalar dependencias
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-
-
 COPY . .
 
-# Configurar la variable de entorno para Quart
+# Configurar QUART_APP
 ENV QUART_APP=app:app
 
-COPY . .
 
 EXPOSE 5001
 

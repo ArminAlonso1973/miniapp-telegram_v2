@@ -1,17 +1,24 @@
+version: '3.8'
+
 services:
   backend:
     build:
       context: ./backend
     ports:
       - "5001:5001"
+    environment:
+      - QUART_APP=app:app
+    env_file:
+      - ./backend/.env
     networks:
       - app-network
 
+      
   frontend:
     build:
       context: ./frontend
     ports:
-      - "5173:5173"
+      - "5173:80" # Cambiado a 80 para producción con Nginx
     networks:
       - app-network
 

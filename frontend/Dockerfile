@@ -1,4 +1,5 @@
-FROM node:latest
+# Etapa de construcción
+FROM node:18-alpine as builder
 
 WORKDIR /app
 
@@ -7,7 +8,13 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+RUN npm run build
 
-EXPOSE 5173
+# Usar Nginx para servir los archivos estáticos
+FROM nginx:stable-alpine
 
-CMD ["npm", "run", "dev"]
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
