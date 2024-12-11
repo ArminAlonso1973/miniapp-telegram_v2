@@ -10,6 +10,7 @@ const App = () => {
   // Variables de entorno
   const CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID; // Sin fallback
   const TELEGRAM_BOT_URL = `${import.meta.env.VITE_BACKEND_URL}/telegram-bot`;
+  
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

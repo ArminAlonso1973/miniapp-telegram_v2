@@ -3,6 +3,7 @@ from quart_cors import cors
 from routes.consulta_routes import consulta_bp
 from routes.telegram_routes import telegram_bp
 from routes.pdf_routes import pdf_bp
+from routes.arango_routes import arango_bp
 from dotenv import load_dotenv
 import logging
 
@@ -21,6 +22,8 @@ app = cors(app, allow_origin="*")
 app.register_blueprint(consulta_bp, url_prefix="/api")
 app.register_blueprint(telegram_bp, url_prefix="/api")
 app.register_blueprint(pdf_bp, url_prefix="/api")
+app.register_blueprint(arango_bp, url_prefix="/api/arango")
+
 
 if __name__ == '__main__':
     logger.info("Iniciando servidor en http://localhost:5001")
