@@ -4,7 +4,7 @@ import asyncio
 from typing import List, Dict
 from dotenv import load_dotenv
 import anthropic
-import PyPDF2
+import pypdf
 from quart import Quart, request, jsonify
 
 class ClaudeSummarizer:
@@ -20,7 +20,7 @@ class ClaudeSummarizer:
         """Extracción asincrónica de texto de PDF"""
         text = ""
         with open(pdf_path, 'rb') as file:
-            reader = PyPDF2.PdfReader(file)
+            reader = pypdf.PdfReader(file)
             for page in reader.pages:
                 text += page.extract_text()
         return text

@@ -16,12 +16,8 @@ COPY . .
 # Configurar la variable de entorno para Quart
 ENV QUART_APP=app:app PYTHONPATH=/app
 
-
 # Exponer el puerto utilizado por el backend
 EXPOSE 5001
 
 # Comando por defecto para ejecutar el servidor
 CMD ["python", "-m", "quart", "run", "--host=0.0.0.0", "--port=5001"]
-
-
-

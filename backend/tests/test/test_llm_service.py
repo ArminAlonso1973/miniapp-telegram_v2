@@ -1,10 +1,11 @@
+# backend/tests/test/test_llm_service.py
+
 import pytest
-from services.llm_service import consultar_llm_respuesta_final
+from services.llm_service import consultar_llm_respuesta_final, generar_prompt_completo
 
 @pytest.mark.asyncio
 async def test_generar_prompt_completo():
     """Prueba para generar el prompt completo."""
-    from services.llm_service import generar_prompt_completo
     respuestas = [
         {
             "question": "¿Qué es el IVA?",
@@ -25,10 +26,12 @@ async def test_generar_prompt_completo():
 @pytest.mark.asyncio
 async def test_consultar_llm_respuesta_final(mocker):
     """Prueba para consultar la respuesta final al modelo LLM."""
-    # Simular el comportamiento de `consultar_openai`
+    # Simular el comportamiento de `consultar_openai` con una respuesta que incluye 'consumo'
     mocker.patch(
         "services.openai_service.consultar_openai",
-        return_value={"respuesta": "El IVA, o Impuesto sobre el Valor Añadido, es un impuesto indirecto que se aplica al consumo de bienes y servicios."}
+        return_value={
+            "respuesta": "El IVA, o Impuesto sobre el Valor Añadido, es un impuesto indirecto que se aplica al consumo de bienes y servicios."
+        }
     )
 
     prompt = "¿Qué es el IVA?"

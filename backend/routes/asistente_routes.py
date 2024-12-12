@@ -28,7 +28,7 @@ async def preguntar():
             return jsonify({"respuesta": "No se encontraron documentos relevantes en la base de datos."}), 404
 
         # Paso 3: Generar prompt y consultar OpenAI
-        prompt = generar_prompt_completo(pregunta, documentos)
+        prompt = await generar_prompt_completo(pregunta, documentos)
         respuesta = await consultar_llm_respuesta_final(prompt)
 
         return jsonify({"respuesta": respuesta}), 200

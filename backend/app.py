@@ -10,6 +10,7 @@ from routes.pdft_routes import pdft_bp
 from dotenv import load_dotenv
 import logging
 
+
 # Configuración del logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

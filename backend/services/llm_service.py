@@ -1,3 +1,5 @@
+# backend/services/llm_service.py
+
 import logging
 from services.openai_service import consultar_openai
 

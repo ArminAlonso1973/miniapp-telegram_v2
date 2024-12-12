@@ -47,6 +47,27 @@ services:
     env_file:
       - ./backend/.env
 
+  tests:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: pytest -v --setup-show
+    volumes:
+      - ./backend:/app
+    environment:
+      - PYTHONPATH=/app
+      - QUART_APP=app:app
+      - ARANGO_HOST=http://arangodb_clean_service_new:8529
+      - ARANGO_DB_NAME=renta_2024
+      - ARANGO_USERNAME=root
+      - ARANGO_PASSWORD=mysecretpassword
+    networks:
+      - app-network
+    depends_on:
+      - arangodb
+    env_file:
+      - ./backend/.env
+
 networks:
   app-network:
     driver: bridge
