@@ -14,7 +14,8 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Configurar la variable de entorno para Quart
-ENV QUART_APP=app:app
+ENV QUART_APP=app:app PYTHONPATH=/app
+
 
 # Exponer el puerto utilizado por el backend
 EXPOSE 5001
