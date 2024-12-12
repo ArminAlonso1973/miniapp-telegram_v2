@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Estilos personalizados */
+/* Estilos personalizados globales */
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -33,15 +33,54 @@ h1 {
   @apply text-4xl font-bold leading-tight;
 }
 
+/* Botones */
 button {
-  @apply rounded-lg border border-transparent px-4 py-2 text-base font-medium bg-gray-800 cursor-pointer transition-colors duration-200;
+  @apply rounded-lg border border-transparent px-4 py-2 text-base font-medium bg-gray-800 text-white cursor-pointer transition-colors duration-200;
 }
 button:hover {
-  @apply border-indigo-500;
+  @apply bg-indigo-500;
+}
+button:disabled {
+  @apply bg-gray-300 text-gray-600 cursor-not-allowed;
 }
 button:focus,
 button:focus-visible {
   @apply outline outline-4 outline-offset-2 focus:outline-indigo-500;
+}
+
+/* Formularios */
+textarea {
+  @apply w-full max-w-lg p-3 border-2 border-gray-300 rounded-lg text-base resize-y;
+}
+
+/* Contenedor principal */
+.container {
+  @apply max-w-4xl mx-auto p-6 text-center;
+}
+
+/* Encabezado */
+.app-header {
+  @apply bg-blue-600 text-white text-center py-4;
+}
+
+/* Sección principal */
+.app-main {
+  @apply flex flex-col items-center gap-6 py-8;
+}
+
+/* Sección de carga de PDF */
+.pdf-section {
+  @apply mb-10;
+}
+
+/* Mensajes de error */
+.error-message {
+  @apply text-red-700 bg-red-200 border border-red-400 p-3 rounded-lg mb-5;
+}
+
+/* Footer */
+.app-footer {
+  @apply text-center bg-gray-100 py-3;
 }
 
 @media (prefers-color-scheme: light) {
@@ -53,6 +92,6 @@ button:focus-visible {
     color: #747bff;
   }
   button {
-    background-color: #f9f9f9;
+    @apply bg-gray-100;
   }
 }

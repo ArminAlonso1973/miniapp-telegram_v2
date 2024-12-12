@@ -21,3 +21,6 @@ EXPOSE 5001
 
 # Comando por defecto para ejecutar el servidor
 CMD ["python", "-m", "quart", "run", "--host=0.0.0.0", "--port=5001"]
+
+
+
