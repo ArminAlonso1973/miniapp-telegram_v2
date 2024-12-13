@@ -34,6 +34,9 @@ async def test_start_assistant(mock_openai_client, mock_service, test_client):
     assert response.status_code == 200
     response_json = await response.get_json()  # Obtener el JSON correctamente
     assert response_json["status"] == "completed"  # Validar el estado
+
+    # Corregir el orden esperado en la prueba
     mock_service.iniciar_flujo_asistente.assert_called_once_with(
-        "test_thread", "Hola, ¿qué deducciones puedo aplicar?", "test_assistant"
+        "test_thread", "test_assistant", "Hola, ¿qué deducciones puedo aplicar?"
     )
+

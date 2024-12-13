@@ -20,12 +20,20 @@ async def start_assistant():
     assistant_id = data.get("assistant_id")
     message = data.get("message")
 
-    if not thread_id or not assistant_id or not message:
+    if not assistant_id or not message:
         return jsonify({"error": "Faltan datos necesarios"}), 400
 
     try:
-        result = await assistant_service.iniciar_flujo_asistente(thread_id, message, assistant_id)
+        # Crear thread si no existe
+        if not thread_id:
+            thread = await openai_client.beta.threads.create(
+                assistant_id=assistant_id,
+                messages=[{"role": "user", "content": message}]
+            )
+            thread_id = thread.id
+
+        # Iniciar flujo con thread_id
+        result = await assistant_service.iniciar_flujo_asistente(thread_id, assistant_id, message)
         return jsonify(result), 200
     except Exception as e:
-        error_message = f"Error procesando la solicitud: {e}"
-        return jsonify({"error": error_message}), 500
+        return jsonify({"error": f"Error procesando la solicitud: {e}"}), 500

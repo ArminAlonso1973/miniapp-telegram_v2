@@ -10,7 +10,7 @@ class AssistantService:
     def __init__(self, client):
         self.client = client
 
-    async def iniciar_flujo_asistente(self, thread_id: str, message: str, assistant_id: str) -> dict:
+    async def iniciar_flujo_asistente(self, thread_id: str, assistant_id: str, message: str) -> dict:
         """Inicia el flujo de interacción con el asistente."""
         try:
             # Enviar mensaje del usuario al asistente
@@ -30,6 +30,7 @@ class AssistantService:
         except Exception as e:
             logger.error(f"Error en iniciar_flujo_asistente: {e}")
             raise
+
 
     async def procesar_mensajes(self, thread_id: str) -> str:
         """Procesa los mensajes de un thread para obtener la respuesta del asistente."""
