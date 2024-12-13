@@ -2,7 +2,7 @@
 
 from quart import Blueprint, request, jsonify
 from services.assistant_service import AssistantService
-from services.openai_service import openai_client  # IMPORTANTE: importar el cliente OpenAI
+from services.openai_service import openai_client
 
 # Crear el blueprint
 assistant_bp = Blueprint("assistant", __name__)
@@ -24,7 +24,8 @@ async def start_assistant():
         return jsonify({"error": "Faltan datos necesarios"}), 400
 
     try:
-        result = await assistant_service.iniciar_flujo_asistente(thread_id, assistant_id, message)
+        result = await assistant_service.iniciar_flujo_asistente(thread_id, message, assistant_id)
         return jsonify(result), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        error_message = f"Error procesando la solicitud: {e}"
+        return jsonify({"error": error_message}), 500

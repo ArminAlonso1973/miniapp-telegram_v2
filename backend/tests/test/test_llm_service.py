@@ -2,6 +2,7 @@
 
 import pytest
 from services.llm_service import consultar_llm_respuesta_final, generar_prompt_completo
+from services.llm_service import normalizar_consulta
 
 @pytest.mark.asyncio
 async def test_generar_prompt_completo():
@@ -42,8 +43,7 @@ async def test_consultar_llm_respuesta_final(mocker):
     assert "impuesto" in respuesta
     assert "consumo" in respuesta
 
-import pytest
-from services.llm_service import normalizar_consulta
+
 
 @pytest.mark.asyncio
 async def test_normalizar_consulta():

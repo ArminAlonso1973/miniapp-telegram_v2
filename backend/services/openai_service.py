@@ -1,8 +1,10 @@
 import asyncio
-from openai import OpenAI
+from openai import AsyncOpenAI
 import os
 
-openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Inicializar el cliente asíncrono
+openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 
 async def consultar_openai(prompt: str):
     """Consulta a OpenAI con un prompt y devuelve la respuesta."""

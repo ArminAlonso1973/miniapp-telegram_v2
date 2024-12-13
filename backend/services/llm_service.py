@@ -1,7 +1,7 @@
 # backend/services/llm_service.py
 
 import logging
-from services.openai_service import consultar_openai
+from services.openai_service import openai_client  # Importa el cliente OpenAI actualizado
 import re
 
 logger = logging.getLogger(__name__)
@@ -29,8 +29,14 @@ async def generar_prompt_completo(message: str, respuestas: list) -> str:
 async def consultar_llm_respuesta_final(prompt: str) -> str:
     """Consulta OpenAI para generar la respuesta final."""
     try:
-        respuesta = await consultar_openai(prompt)
-        return respuesta.get("respuesta", "No se pudo obtener una respuesta del modelo.")
+        # Usa el cliente OpenAI asincrónico directamente
+        respuesta = await openai_client.chat.completions.create(
+            model="gpt-4o-mini-2024-07-18",  # Ajusta el modelo según configuración
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7
+        )
+        # Extraer la respuesta del modelo
+        return respuesta.choices[0].message.content
     except Exception as e:
         logger.error(f"Error consultando LLM para respuesta final: {e}")
         return "Error al consultar el modelo LLM."
