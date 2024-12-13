@@ -6,6 +6,7 @@ from routes.pdf_routes import pdf_bp
 from routes.arango_routes import arango_bp
 from routes.asistente_routes import asistente_bp
 from routes.pdft_routes import pdft_bp
+from routes.assistant_routes import assistant_bp
 
 from dotenv import load_dotenv
 import logging
@@ -29,6 +30,7 @@ app.register_blueprint(pdf_bp, url_prefix="/api")
 app.register_blueprint(arango_bp, url_prefix="/api/arango")
 app.register_blueprint(asistente_bp, url_prefix="/api/asistente")
 app.register_blueprint(pdft_bp, url_prefix="/api/pdft")
+app.register_blueprint(assistant_bp, url_prefix="/api/assistant")
 
 
 if __name__ == '__main__':

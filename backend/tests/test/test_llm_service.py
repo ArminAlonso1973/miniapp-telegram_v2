@@ -41,3 +41,12 @@ async def test_consultar_llm_respuesta_final(mocker):
     assert "IVA" in respuesta
     assert "impuesto" in respuesta
     assert "consumo" in respuesta
+
+import pytest
+from services.llm_service import normalizar_consulta
+
+@pytest.mark.asyncio
+async def test_normalizar_consulta():
+    consulta = "  ¿Qué   deducciones puedo aplicar en el 2024?   "
+    resultado = await normalizar_consulta(consulta)
+    assert resultado == "qué deducciones puedo aplicar en el 2024"

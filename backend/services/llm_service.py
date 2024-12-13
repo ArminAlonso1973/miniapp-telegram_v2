@@ -2,6 +2,7 @@
 
 import logging
 from services.openai_service import consultar_openai
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -33,3 +34,15 @@ async def consultar_llm_respuesta_final(prompt: str) -> str:
     except Exception as e:
         logger.error(f"Error consultando LLM para respuesta final: {e}")
         return "Error al consultar el modelo LLM."
+
+async def normalizar_consulta(consulta: str) -> str:
+    """
+    Limpia y estructura una consulta del usuario.
+    """
+    try:
+        consulta = consulta.strip().lower()
+        consulta = re.sub(r"[^a-zA-Z0-9áéíóúñü\s]", "", consulta)
+        consulta = re.sub(r"\s+", " ", consulta)
+        return consulta
+    except Exception as e:
+        raise ValueError(f"Error al normalizar consulta: {str(e)}")
