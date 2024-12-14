@@ -4,7 +4,8 @@ import pytest_asyncio
 import tracemalloc
 import logging
 import os
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
+from unittest.mock import Mock
 from quart import Quart
 from quart_cors import cors
 from routes.consulta_routes import consulta_bp
@@ -75,8 +76,26 @@ async def mock_openai(mocker):
     mocker.patch("services.assistant_service.openai_client", new_callable=AsyncMock)
     return mocker
 
+
+
+from unittest.mock import Mock
+
 @pytest_asyncio.fixture
 async def mock_arango(mocker):
     """Mockear el cliente de ArangoDB."""
-    mocker.patch("services.arango_service.arango_collection", new_callable=AsyncMock)
+    mock_db = Mock()
+    mock_collection = Mock()
+    mock_db.collection.return_value = mock_collection
+
+    # Mockear resultados simulados
+    mock_collection.get.side_effect = lambda key: {
+        "key1": {"question": "Pregunta simulada para key1", "answer": "Respuesta simulada", "legal_reference": "Referencia simulada"},
+        "key2": {"question": "Pregunta simulada para key2", "answer": "Respuesta simulada", "legal_reference": "Referencia simulada"},
+    }.get(key, None)
+
+    # Mockear `connect_arango` para devolver `mock_db`
+    mocker.patch("services.arango_service.connect_arango", return_value=mock_db)
     return mocker
+
+
+

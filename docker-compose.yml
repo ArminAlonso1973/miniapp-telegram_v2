@@ -1,18 +1,28 @@
 version: '3.8'
-
 services:
-  arangodb:
-    container_name: arangodb_clean_service_new
-    image: arangodb:latest
+  postgres:
+    container_name: postgres_service
+    image: postgres:14
     ports:
-      - "8529:8529"
+      - "5432:5432"
     environment:
-      - ARANGO_ROOT_PASSWORD=mysecretpassword
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
-      - arangodb-data:/var/lib/arangodb3
+      - postgres-data:/var/lib/postgresql/data
     networks:
       - app-network
+    env_file:
+      - ./backend/.env
 
+  redis:
+    container_name: redis_service
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
     env_file:
       - ./backend/.env
 
@@ -24,15 +34,18 @@ services:
       - "5001:5001"
     environment:
       - QUART_APP=app:app
-      - ARANGO_HOST=http://arangodb_clean_service_new:8529
-      - ARANGO_DB_NAME=renta_2024
-      - ARANGO_USERNAME=root
-      - ARANGO_PASSWORD=mysecretpassword
+      - POSTGRES_HOST=postgres_service
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - REDIS_HOST=redis_service
+      - REDIS_PORT=6379
     networks:
       - app-network
     depends_on:
-      - arangodb
-
+      - postgres
+      - redis
     env_file:
       - ./backend/.env
 
@@ -43,7 +56,6 @@ services:
       - "5173:80"
     networks:
       - app-network
-  
     env_file:
       - ./backend/.env
 
@@ -57,14 +69,18 @@ services:
     environment:
       - PYTHONPATH=/app
       - QUART_APP=app:app
-      - ARANGO_HOST=http://arangodb_clean_service_new:8529
-      - ARANGO_DB_NAME=renta_2024
-      - ARANGO_USERNAME=root
-      - ARANGO_PASSWORD=mysecretpassword
+      - POSTGRES_HOST=postgres_service
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - REDIS_HOST=redis_service
+      - REDIS_PORT=6379
     networks:
       - app-network
     depends_on:
-      - arangodb
+      - postgres
+      - redis
     env_file:
       - ./backend/.env
 
@@ -73,5 +89,5 @@ networks:
     driver: bridge
 
 volumes:
-  arangodb-data:
+  postgres-data:
     driver: local
