@@ -7,6 +7,8 @@ from routes.arango_routes import arango_bp
 from routes.asistente_routes import asistente_bp
 from routes.pdft_routes import pdft_bp
 from routes.assistant_routes import assistant_bp
+from routes.redis_routes import redis_bp
+from services.redis_service import init_redis
 from dotenv import load_dotenv
 import logging
 import os
@@ -43,6 +45,12 @@ app.register_blueprint(arango_bp, url_prefix="/api/arango")
 app.register_blueprint(asistente_bp, url_prefix="/api/asistente")
 app.register_blueprint(pdft_bp, url_prefix="/api/pdft")
 app.register_blueprint(assistant_bp, url_prefix="/api/assistant")
+app.register_blueprint(redis_bp, url_prefix='/')
+
+# Inicializar servicios antes de iniciar el servidor
+@app.before_serving
+async def startup():
+    await init_redis()
 
 if __name__ == '__main__':
     logger.info("Iniciando servidor en http://localhost:5001")
