@@ -1,0 +1,133 @@
+.
+├── Dockerfile
+├── __pycache__
+│   ├── app.cpython-311.pyc
+│   └── app.cpython-39.pyc
+├── app.py
+├── decisiones_arquitectura.md
+├── estructura.txt
+├── feature
+│   └── asistente-tributario.py
+├── pytest.ini
+├── requirements.txt
+├── routes
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-311.pyc
+│   │   ├── __init__.cpython-39.pyc
+│   │   ├── arango_routes.cpython-311.pyc
+│   │   ├── arango_routes.cpython-39.pyc
+│   │   ├── asistente_routes.cpython-311.pyc
+│   │   ├── asistente_routes.cpython-39.pyc
+│   │   ├── assistant_routes.cpython-311.pyc
+│   │   ├── assistant_routes.cpython-39.pyc
+│   │   ├── consulta_routes.cpython-311.pyc
+│   │   ├── consulta_routes.cpython-39.pyc
+│   │   ├── pdf_routes.cpython-311.pyc
+│   │   ├── pdf_routes.cpython-39.pyc
+│   │   ├── pdft_routes.cpython-311.pyc
+│   │   ├── pdft_routes.cpython-39.pyc
+│   │   ├── redis_routes.cpython-311.pyc
+│   │   ├── telegram_routes.cpython-311.pyc
+│   │   └── telegram_routes.cpython-39.pyc
+│   ├── asistente_routes.py
+│   ├── assistant_routes.py
+│   ├── consulta_routes.py
+│   ├── pdf_routes.py
+│   ├── pdft_routes.py
+│   ├── postgres_routes.py
+│   ├── redis_routes.py
+│   └── telegram_routes.py
+├── scripts
+│   ├── data.json
+│   └── load_data_to_postgres.py
+├── services
+│   ├── ClaudeSummarizer.py
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── ClaudeSummarizer.cpython-311.pyc
+│   │   ├── ClaudeSummarizer.cpython-39.pyc
+│   │   ├── __init__.cpython-311.pyc
+│   │   ├── __init__.cpython-39.pyc
+│   │   ├── arango_service.cpython-311.pyc
+│   │   ├── arango_service.cpython-39.pyc
+│   │   ├── assistant_service.cpython-311.pyc
+│   │   ├── assistant_service.cpython-39.pyc
+│   │   ├── database.cpython-311.pyc
+│   │   ├── database.cpython-39.pyc
+│   │   ├── llm_service.cpython-311.pyc
+│   │   ├── llm_service.cpython-39.pyc
+│   │   ├── openai_service.cpython-311.pyc
+│   │   ├── openai_service.cpython-39.pyc
+│   │   ├── postgres_service.cpython-311.pyc
+│   │   ├── redis_service.cpython-311.pyc
+│   │   ├── telegram_service.cpython-311.pyc
+│   │   ├── telegram_service.cpython-39.pyc
+│   │   ├── vector_service.cpython-311.pyc
+│   │   └── vector_service.cpython-39.pyc
+│   ├── arango_service.py
+│   ├── assistans_prueba.py
+│   ├── assistant_service.py
+│   ├── buscar_respuestas_service.py
+│   ├── database.py
+│   ├── llm_service.py
+│   ├── openai_service.py
+│   ├── postgres_service.py
+│   ├── prueba
+│   ├── redis_service.py
+│   ├── telegram_service.py
+│   ├── utils.py
+│   └── vector_service.py
+├── tests
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-311.pyc
+│   │   ├── __init__.cpython-39.pyc
+│   │   ├── conftest.cpython-311-pytest-8.3.4.pyc
+│   │   └── conftest.cpython-39-pytest-8.3.4.pyc
+│   ├── conftest.py
+│   └── test
+│       ├── Dockerfile
+│       ├── __init__.py
+│       ├── __pycache__
+│       │   ├── __init__.cpython-311.pyc
+│       │   ├── __init__.cpython-39.pyc
+│       │   ├── test_arango_service.cpython-311-pytest-8.3.4.pyc
+│       │   ├── test_arango_service.cpython-39-pytest-8.3.4.pyc
+│       │   ├── test_asistente_routes.cpython-311-pytest-8.3.4.pyc
+│       │   ├── test_asistente_routes.cpython-39-pytest-8.3.4.pyc
+│       │   ├── test_assistant_routes.cpython-311-pytest-8.3.4.pyc
+│       │   ├── test_assistant_routes.cpython-39-pytest-8.3.4.pyc
+│       │   ├── test_assistant_service.cpython-311-pytest-8.3.4.pyc
+│       │   ├── test_assistant_service.cpython-39-pytest-8.3.4.pyc
+│       │   ├── test_fixture.cpython-311-pytest-8.3.4.pyc
+│       │   ├── test_fixture.cpython-39-pytest-8.3.4.pyc
+│       │   ├── test_guardar_y_obtener_cache.cpython-311-pytest-8.3.4.pyc
+│       │   ├── test_llm_service.cpython-311-pytest-8.3.4.pyc
+│       │   ├── test_llm_service.cpython-39-pytest-8.3.4.pyc
+│       │   ├── test_openai.cpython-311-pytest-8.3.4.pyc
+│       │   ├── test_openai.cpython-39-pytest-8.3.4.pyc
+│       │   ├── test_postgres_connection.cpython-311-pytest-8.3.4.pyc
+│       │   ├── test_redis.cpython-311-pytest-8.3.4.pyc
+│       │   ├── test_simple.cpython-311-pytest-8.3.4.pyc
+│       │   ├── test_simple.cpython-39-pytest-8.3.4.pyc
+│       │   ├── test_telegram_routes.cpython-311-pytest-8.3.4.pyc
+│       │   ├── test_vector_service.cpython-311-pytest-8.3.4.pyc
+│       │   └── test_vector_service.cpython-39-pytest-8.3.4.pyc
+│       ├── consulta_routes.py
+│       ├── test_assistant_routes.py
+│       ├── test_assistant_service.py
+│       ├── test_fixture.py
+│       ├── test_guardar_y_obtener_cache.py
+│       ├── test_llm_service.py
+│       ├── test_openai.py
+│       ├── test_postgres_connection.py
+│       ├── test_redis.py
+│       ├── test_simple.py
+│       ├── test_telegram_routes.py
+│       └── test_vector_service.py
+└── utils
+    ├── config.py
+    └── logger.py
+
+13 directories, 118 files
