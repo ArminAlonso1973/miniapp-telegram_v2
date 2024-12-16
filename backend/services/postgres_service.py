@@ -1,51 +1,57 @@
-# Archivo: services/postgres_service.py
 import asyncpg
 import logging
 
 logger = logging.getLogger(__name__)
 
-POSTGRES_URI = "postgresql://user:password@localhost:5432/renta_2024"
-pg_pool = None
-
-async def init_postgres():
-    global pg_pool
-    if not pg_pool:
-        pg_pool = await asyncpg.create_pool(dsn=POSTGRES_URI)
-        logger.info("Conexión exitosa a PostgreSQL")
-
-async def insertar_documento(table_name, document):
-    """
-    Inserta un documento en la tabla especificada en PostgreSQL.
-    Args:
-        table_name (str): Nombre de la tabla.
-        document (dict): Documento a insertar.
-    Returns:
-        int: ID del documento insertado.
-    """
+async def connect_postgres():
+    """Establece la conexión con PostgreSQL."""
     try:
-        columns = ", ".join(document.keys())
-        values = ", ".join(f"'{v}'" for v in document.values())
-
-        async with pg_pool.acquire() as connection:
-            query = f"INSERT INTO {table_name} ({columns}) VALUES ({values}) RETURNING id"
-            result = await connection.fetchval(query)
-            return result
+        connection = await asyncpg.connect(
+            user="asistente_tributario_db_user",
+            password="3fBc0D7Chp5bll8m9m7G6L5cvPNYPCOU",
+            database="asistente_tributario_db",
+            host="postgres_service",
+            port=5432,
+        )
+        logger.info("✅ Conexión a PostgreSQL establecida.")
+        return connection
     except Exception as e:
-        logger.error(f"Error al insertar documento en PostgreSQL: {e}")
+        logger.error(f"❌ Error al conectar con PostgreSQL: {e}")
         raise
 
-async def ejecutar_consulta(query):
+
+async def buscar_respuestas_postgres(keys: list):
     """
-    Ejecuta una consulta en PostgreSQL.
+    Busca respuestas en PostgreSQL usando claves.
     Args:
-        query (str): Consulta SQL.
+        keys (list): Lista de claves a buscar.
     Returns:
-        list: Resultados de la consulta.
+        list: Respuestas encontradas en la base de datos.
     """
+    if not keys:
+        logger.warning("La lista de claves está vacía.")
+        return []
+
     try:
-        async with pg_pool.acquire() as connection:
-            results = await connection.fetch(query)
-            return [dict(record) for record in results]
+        conn = await asyncpg.connect(
+            user="asistente_tributario_db_user",
+            password="3fBc0D7Chp5bll8m9m7G6L5cvPNYPCOU",
+            database="asistente_tributario_db",
+            host="localhost",
+            port=5432
+        )
+
+        query = """
+            SELECT question, answer, legal_reference
+            FROM preguntas
+            WHERE _key = ANY($1::text[]);
+        """
+        respuestas = await conn.fetch(query, keys)
+        await conn.close()
+
+        logger.info(f"Se encontraron {len(respuestas)} respuestas para las claves proporcionadas.")
+        return [dict(respuesta) for respuesta in respuestas]
+
     except Exception as e:
-        logger.error(f"Error al ejecutar consulta en PostgreSQL: {e}")
-        raise
+        logger.error(f"Error buscando en PostgreSQL: {e}")
+        return []

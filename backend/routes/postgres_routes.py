@@ -1,19 +1,18 @@
-from quart import Quart, jsonify
-import os
+from quart import Blueprint, request, jsonify
+from services.postgres_service import buscar_respuestas_postgres
+import logging
 
-app = Quart(__name__)
+logger = logging.getLogger(__name__)
 
-@app.route('/')
-async def home():
-    return jsonify({
-        "status": "ok",
-        "message": "Backend service is running",
-        "database": "ArangoDB",
-        "environment": {
-            "POSTGRES_HOST": os.environ.get('POSTGRES_HOST', 'Not set'),
-            "POSTGRES_DB": os.environ.get('POSTGRES_DB', 'Not set')
-        }
-    }), 200
+postgres_bp = Blueprint('postgres', __name__)
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001)
+
+@postgres_bp.route('/query', methods=['POST'])
+async def execute_query_postgres():
+    data = await request.get_json()
+    keys = data.get("keys")
+    results = await buscar_respuestas_postgres(keys)
+    return jsonify({"status": "success", "results": results})
+
+
+

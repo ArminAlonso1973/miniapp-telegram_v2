@@ -11,7 +11,6 @@ from quart_cors import cors
 from routes.consulta_routes import consulta_bp
 from routes.telegram_routes import telegram_bp
 from routes.pdf_routes import pdf_bp
-from routes.arango_routes import arango_bp
 from routes.asistente_routes import asistente_bp
 from routes.pdft_routes import pdft_bp
 from dotenv import load_dotenv  # IMPORTANTE: Agregar esta línea
@@ -45,7 +44,6 @@ async def app():
     app.register_blueprint(consulta_bp, url_prefix="/api")
     app.register_blueprint(telegram_bp, url_prefix="/api")
     app.register_blueprint(pdf_bp, url_prefix="/api")
-    app.register_blueprint(arango_bp, url_prefix="/api/arango")
     app.register_blueprint(asistente_bp, url_prefix="/api/asistente")
     app.register_blueprint(pdft_bp, url_prefix="/api/pdft")
     app.register_blueprint(assistant_bp, url_prefix="/api/assistant")
@@ -78,7 +76,7 @@ async def mock_openai(mocker):
 
 
 
-from unittest.mock import Mock
+
 
 @pytest_asyncio.fixture
 async def mock_arango(mocker):
