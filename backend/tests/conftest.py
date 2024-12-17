@@ -78,22 +78,5 @@ async def mock_openai(mocker):
 
 
 
-@pytest_asyncio.fixture
-async def mock_arango(mocker):
-    """Mockear el cliente de ArangoDB."""
-    mock_db = Mock()
-    mock_collection = Mock()
-    mock_db.collection.return_value = mock_collection
-
-    # Mockear resultados simulados
-    mock_collection.get.side_effect = lambda key: {
-        "key1": {"question": "Pregunta simulada para key1", "answer": "Respuesta simulada", "legal_reference": "Referencia simulada"},
-        "key2": {"question": "Pregunta simulada para key2", "answer": "Respuesta simulada", "legal_reference": "Referencia simulada"},
-    }.get(key, None)
-
-    # Mockear `connect_arango` para devolver `mock_db`
-    mocker.patch("services.arango_service.connect_arango", return_value=mock_db)
-    return mocker
-
 
 

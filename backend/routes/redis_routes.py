@@ -12,7 +12,7 @@ async def get_cache():
 
     valor = await obtener_cache(clave)
     if valor:
-        return jsonify({"status": "success", "value": valor.decode()}), 200
+        return jsonify({"status": "success", "value": valor}), 200
     return jsonify({"status": "error", "message": "Clave no encontrada"}), 404
 
 @redis_bp.route('/cache', methods=['POST'])

@@ -1,105 +1,129 @@
+Aquí tienes la actualización de la arquitectura del sistema con los cambios implementados hasta ahora, incluyendo la migración de ArangoDB a PostgreSQL y otras mejoras introducidas recientemente.
 Decisiones de Arquitectura 📚🚀
-
 Contexto General 🌟
 
-El proyecto actual tiene como objetivo desarrollar una miniaplicación utilizando contenedores Docker para gestionar un backend basado en Quart, con soporte para operaciones asincrónicas, integración con bases de datos y pruebas automatizadas. A continuación, se documentan las decisiones arquitectónicas tomadas hasta la fecha.
-
+El proyecto implementa una miniaplicación estructurada en microservicios contenedorizados con Docker. La arquitectura facilita la integración de un backend asincrónico, bases de datos relacionales, memoria en caché y pruebas automatizadas.
 Contenedores Docker 🐳
-
 Situación Actual ⚙️
 
-Backend:
+    Backend:
+        Framework: Quart (compatible con operaciones asincrónicas).
+        Implementa lógica centralizada y las rutas de los servicios.
+        Desarrollado en Python 3.11.
 
-Lenguaje: Python con Quart.
+    Frontend:
+        Servicio independiente para la interfaz.
+        Desplegado en un contenedor separado.
 
-Define la lógica de la aplicación y las rutas para los servicios.
+    PostgreSQL:
+        Base de datos relacional principal.
+        Uso: Almacenamiento persistente de documentos y consultas reemplazando a ArangoDB.
+        Configuración mediante variables de entorno.
 
-Frontend:
+    Redis:
+        Base de datos en memoria para operaciones rápidas y manejo de caché.
+        Uso: Operaciones livianas, colas de mensajes.
 
-Se utiliza un contenedor separado para manejar la interfaz.
+Decisiones Clave 🔑
+1. Migración de ArangoDB a PostgreSQL 🗄️
 
-PostgreSQL:
+    Motivo: ArangoDB no tenía compatibilidad óptima con operaciones asincrónicas en Quart.
+    Estado Actual:
+        Funcionalidades principales reescritas en PostgreSQL:
+            búsqueda de documentos.
+            consultas personalizadas por clave (/api/postgres/query).
+    Pruebas:
+        Las nuevas funciones PostgreSQL han sido validadas y reemplazan exitosamente a las antiguas de ArangoDB.
 
-Base de datos relacional, utilizada como reemplazo de ArangoDB.
+2. Arquitectura del Backend 🛠️
 
-Configurado con variables de entorno para credenciales.
+    Framework: Quart.
+        Seleccionado por su soporte nativo de asincronía.
+        Permite integración eficiente con PostgreSQL y Redis.
 
-Integrado con soporte nativo en Render.
+    Centralización de Servicios:
+        La inicialización de servicios clave como Redis y PostgreSQL se centralizó en:
+            services/__init__.py → para evitar inicializaciones duplicadas.
 
-Redis:
+    Registro de Rutas:
+        Todas las rutas están registradas de manera unificada en app.py.
+        Ejemplo de rutas registradas:
+            /api → rutas de consultas.
+            /api/postgres → funcionalidades basadas en PostgreSQL.
+            /api/redis → funcionalidades de Redis.
 
-Base de datos en memoria, utilizada para manejar operaciones rápidas y colas de mensajes.
+    Problemas Solucionados:
+        Eliminación de duplicación de blueprints.
+        Se unificó la lógica de inicialización y registro de rutas.
 
-Configurado también con soporte en Render.
+Estructura de Directorios 📂
 
-Problemas y Cambios 🔄
-
-Inicialmente, se implementó ArangoDB como base de datos principal, pero debido a incompatibilidades con operaciones asincrónicas en Quart, se decidió migrar a PostgreSQL.
-
-Desarrollo del Backend 🛠️
-
-Framework Seleccionado:
-
-Quart: Elegido por su soporte para asincronía, permitiendo operaciones eficientes con Redis y PostgreSQL.
-
-Decisiones sobre Lógica de Inicio:
-
-Centralizar la inicialización de servicios (p. ej., Redis) en el archivo services/__init__.py.
-
-Uso de “fábrica de pruebas” para permitir la configuración flexible del backend, especialmente durante las pruebas automatizadas.
-
-Problemas Encontrados:
-
-Se detectaron problemas de repetición de código al trasladar los “blueprints” a __init__.py. Aunque esta estructura mejora la modularidad, es necesario refactorizar para evitar duplicación de código.
-
-Bases de Datos 🗄️
-
-PostgreSQL
-
-Base de datos principal para almacenamiento persistente.
-
-Utiliza conexión nativa en Render.
-
-Configurado en un contenedor separado, manejado por Docker Compose.
-
-Redis
-
-Base de datos en memoria para operaciones rápidas.
-
-Utilizada también para colas de mensajes.
+miniapp-telegram_v2/
+│
+├── backend/
+│   ├── app.py                       # Punto de entrada principal del backend
+│   ├── services/                    # Lógica de servicios
+│   │   ├── __init__.py              # Inicialización centralizada de Redis y PostgreSQL
+│   │   ├── postgres_service.py      # Funciones de conexión y consultas PostgreSQL
+│   │   ├── redis_service.py         # Inicialización de Redis
+│   │
+│   ├── routes/                      # Rutas y endpoints
+│   │   ├── consulta_routes.py       # Rutas generales de consultas
+│   │   ├── postgres_routes.py       # Rutas específicas para PostgreSQL
+│   │   ├── redis_routes.py          # Rutas para Redis
+│   │   ├── telegram_routes.py       # Rutas relacionadas con Telegram
+│   │
+│   ├── test/                        # Pruebas automatizadas
+│   │   ├── test_postgres_connection.py
+│   │   ├── test_telegram_routes.py
+│   │   └── ...
+│   │
+│   ├── Dockerfile                   # Configuración del contenedor backend
+│   └── requirements.txt             # Dependencias del proyecto
+│
+└── docker-compose.yml               # Orquestación de servicios
 
 Pruebas Automatizadas ✅
 
-Framework: Pytest.
+    Framework: Pytest.
+    Ubicación: backend/test/.
+    Pruebas Actuales:
+        Unitarias:
+            Verificación de funciones del servicio PostgreSQL.
+            Pruebas de Redis.
+        Integración:
+            Validación de rutas HTTP (e.g., /api/postgres/query).
+        Ejemplo:
 
-Ubicación: Las pruebas se encuentran en el directorio ./backend/test/test.
+        pytest backend/test/test_postgres_connection.py
 
-Cobertura:
+Orquestación con Docker Compose 🐳
+Configuración Actualizada
 
-Pruebas unitarias de los servicios.
+El archivo docker-compose.yml orquesta todos los servicios necesarios:
 
-Pruebas de integración para verificar el funcionamiento de rutas y servicios externos.
+    backend: Servicio Quart escuchando en 5001.
+    frontend: Servicio del frontend en 5173.
+    PostgreSQL: Base de datos relacional en 5432.
+    Redis: Caché en 6379.
 
-Cambios Implementados 📝
+Pendientes y Planes Futuros 🌱
 
-Migración de ArangoDB a PostgreSQL debido a problemas de compatibilidad asincrónica.
+    Refactorización del Registro de Rutas:
+        Consolidar completamente la lógica en app.py.
 
-Uso de Redis para almacenamiento rápido.
+    Ampliar Pruebas:
+        Incluir más pruebas de integración para garantizar cobertura completa.
 
-Inclusión de un esquema de pruebas automatizadas basado en Pytest.
+    Documentación:
+        Generar documentación interna para la API (usando Swagger o Postman).
 
-Implementación de una fábrica de pruebas para flexibilizar el desarrollo y permitir una mejor configuración de pruebas.
+    Optimización del Backend:
+        Investigar el uso de pools de conexiones en PostgreSQL para mejorar el rendimiento.
 
-Configuración de contenedores Docker separados para cada componente (backend, frontend, PostgreSQL y Redis).
+Conclusión 📝
 
-Planes Futuros 🌱
+La migración a PostgreSQL ha fortalecido la estabilidad y capacidad de gestión de datos del proyecto. Con la consolidación de rutas y servicios, se ha mejorado la modularidad y claridad del sistema.
 
-Refactorizar la lógica de inicialización de blueprints para evitar duplicación de código.
+Con los siguientes pasos enfocados en refactorización y documentación, el sistema quedará listo para escalar y adaptarse a nuevas funcionalidades. 🚀
 
-Consolidar un sistema de documentación interna que facilite la colaboración en el equipo.
-
-Ampliar las pruebas automatizadas para incluir casos de error complejos.
-
-Notas Finales 🖋️
-
-Este archivo debe actualizarse de forma regular para reflejar cualquier cambio importante en la arquitectura del proyecto. La consistencia en las decisiones arquitectónicas es clave para mantener un sistema robusto y fácil de escalar. ✨

@@ -52,3 +52,7 @@ async def normalizar_consulta(consulta: str) -> str:
         return consulta
     except Exception as e:
         raise ValueError(f"Error al normalizar consulta: {str(e)}")
+
+
+
+

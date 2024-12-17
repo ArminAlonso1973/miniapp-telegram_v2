@@ -37,3 +37,5 @@ async def start_assistant():
         return jsonify(result), 200
     except Exception as e:
         return jsonify({"error": f"Error procesando la solicitud: {e}"}), 500
+
+
