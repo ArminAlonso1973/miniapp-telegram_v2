@@ -3,6 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 async def connect_postgres():
     """Establece la conexión con PostgreSQL."""
     try:
@@ -10,7 +11,7 @@ async def connect_postgres():
             user="asistente_tributario_db_user",
             password="3fBc0D7Chp5bll8m9m7G6L5cvPNYPCOU",
             database="asistente_tributario_db",
-            host="postgres_service",
+            host="postgres_service",  # Host del servicio de Postgres
             port=5432,
         )
         logger.info("✅ Conexión a PostgreSQL establecida.")
@@ -33,11 +34,12 @@ async def buscar_respuestas_postgres(keys: list):
         return []
 
     try:
+        # Cambiar localhost por postgres_service
         conn = await asyncpg.connect(
             user="asistente_tributario_db_user",
             password="3fBc0D7Chp5bll8m9m7G6L5cvPNYPCOU",
             database="asistente_tributario_db",
-            host="localhost",
+            host="postgres_service",  # <-- Cambiar localhost por postgres_service
             port=5432
         )
 

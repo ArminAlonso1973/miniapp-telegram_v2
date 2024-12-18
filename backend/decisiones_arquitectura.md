@@ -1,129 +1,178 @@
-Aquí tienes la actualización de la arquitectura del sistema con los cambios implementados hasta ahora, incluyendo la migración de ArangoDB a PostgreSQL y otras mejoras introducidas recientemente.
-Decisiones de Arquitectura 📚🚀
-Contexto General 🌟
+Decisiones de Arquitectura
 
-El proyecto implementa una miniaplicación estructurada en microservicios contenedorizados con Docker. La arquitectura facilita la integración de un backend asincrónico, bases de datos relacionales, memoria en caché y pruebas automatizadas.
-Contenedores Docker 🐳
-Situación Actual ⚙️
+📊 Contexto General
 
-    Backend:
-        Framework: Quart (compatible con operaciones asincrónicas).
-        Implementa lógica centralizada y las rutas de los servicios.
-        Desarrollado en Python 3.11.
+El proyecto tiene como objetivo desarrollar una miniaplicación modular y escalable, utilizando contenedores Docker. La aplicación incluye un backend basado en Quart y soporte para integración con bases de datos, sistemas de caché y servicios externos de OpenAI. A continuación, se documentan las decisiones clave que facilitan el mantenimiento y la extensibilidad del proyecto.
 
-    Frontend:
-        Servicio independiente para la interfaz.
-        Desplegado en un contenedor separado.
+🛠️ Principales Componentes
 
-    PostgreSQL:
-        Base de datos relacional principal.
-        Uso: Almacenamiento persistente de documentos y consultas reemplazando a ArangoDB.
-        Configuración mediante variables de entorno.
+Backend
 
-    Redis:
-        Base de datos en memoria para operaciones rápidas y manejo de caché.
-        Uso: Operaciones livianas, colas de mensajes.
+Lenguaje: Python.
 
-Decisiones Clave 🔑
-1. Migración de ArangoDB a PostgreSQL 🗄️
+Framework: Quart por su soporte asíncrono.
 
-    Motivo: ArangoDB no tenía compatibilidad óptima con operaciones asincrónicas en Quart.
-    Estado Actual:
-        Funcionalidades principales reescritas en PostgreSQL:
-            búsqueda de documentos.
-            consultas personalizadas por clave (/api/postgres/query).
-    Pruebas:
-        Las nuevas funciones PostgreSQL han sido validadas y reemplazan exitosamente a las antiguas de ArangoDB.
+Características Principales:
 
-2. Arquitectura del Backend 🛠️
+Registro de Blueprints para organizar las rutas.
 
-    Framework: Quart.
-        Seleccionado por su soporte nativo de asincronía.
-        Permite integración eficiente con PostgreSQL y Redis.
+Inicialización centralizada de servicios.
 
-    Centralización de Servicios:
-        La inicialización de servicios clave como Redis y PostgreSQL se centralizó en:
-            services/__init__.py → para evitar inicializaciones duplicadas.
+Manejo eficiente de errores y logs.
 
-    Registro de Rutas:
-        Todas las rutas están registradas de manera unificada en app.py.
-        Ejemplo de rutas registradas:
-            /api → rutas de consultas.
-            /api/postgres → funcionalidades basadas en PostgreSQL.
-            /api/redis → funcionalidades de Redis.
+Frontend
 
-    Problemas Solucionados:
-        Eliminación de duplicación de blueprints.
-        Se unificó la lógica de inicialización y registro de rutas.
+Manejado en un contenedor separado.
 
-Estructura de Directorios 📂
+Independiente del backend.
 
-miniapp-telegram_v2/
-│
-├── backend/
-│   ├── app.py                       # Punto de entrada principal del backend
-│   ├── services/                    # Lógica de servicios
-│   │   ├── __init__.py              # Inicialización centralizada de Redis y PostgreSQL
-│   │   ├── postgres_service.py      # Funciones de conexión y consultas PostgreSQL
-│   │   ├── redis_service.py         # Inicialización de Redis
-│   │
-│   ├── routes/                      # Rutas y endpoints
-│   │   ├── consulta_routes.py       # Rutas generales de consultas
-│   │   ├── postgres_routes.py       # Rutas específicas para PostgreSQL
-│   │   ├── redis_routes.py          # Rutas para Redis
-│   │   ├── telegram_routes.py       # Rutas relacionadas con Telegram
-│   │
-│   ├── test/                        # Pruebas automatizadas
-│   │   ├── test_postgres_connection.py
-│   │   ├── test_telegram_routes.py
-│   │   └── ...
-│   │
-│   ├── Dockerfile                   # Configuración del contenedor backend
-│   └── requirements.txt             # Dependencias del proyecto
-│
-└── docker-compose.yml               # Orquestación de servicios
+Bases de Datos
 
-Pruebas Automatizadas ✅
+Redis: Almacenamiento en caché para respuestas frecuentes.
 
-    Framework: Pytest.
-    Ubicación: backend/test/.
-    Pruebas Actuales:
-        Unitarias:
-            Verificación de funciones del servicio PostgreSQL.
-            Pruebas de Redis.
-        Integración:
-            Validación de rutas HTTP (e.g., /api/postgres/query).
-        Ejemplo:
+PostgreSQL: Base de datos relacional utilizada para datos persistentes.
 
-        pytest backend/test/test_postgres_connection.py
+Asistente OpenAI
 
-Orquestación con Docker Compose 🐳
-Configuración Actualizada
+Modelo: Integrado con GPT-4.
 
-El archivo docker-compose.yml orquesta todos los servicios necesarios:
+Funcionalidades:
 
-    backend: Servicio Quart escuchando en 5001.
-    frontend: Servicio del frontend en 5173.
-    PostgreSQL: Base de datos relacional en 5432.
-    Redis: Caché en 6379.
+Recepción de mensajes y ejecución de tool calls.
 
-Pendientes y Planes Futuros 🌱
+Ejecución de requires actions con respuestas automáticas.
 
-    Refactorización del Registro de Rutas:
-        Consolidar completamente la lógica en app.py.
+Búsqueda optimizada en Redis y posteriormente en PostgreSQL.
 
-    Ampliar Pruebas:
-        Incluir más pruebas de integración para garantizar cobertura completa.
+Generación de prompts y respuestas finales basadas en contexto.
 
-    Documentación:
-        Generar documentación interna para la API (usando Swagger o Postman).
+📏 Nuevas Decisiones Clave
 
-    Optimización del Backend:
-        Investigar el uso de pools de conexiones en PostgreSQL para mejorar el rendimiento.
+1. Agrupación de Funciones Complejas de OpenAI
 
-Conclusión 📝
+Se ha unificado toda la lógica de comunicación con el asistente de OpenAI en una única clase: AssistantService.
 
-La migración a PostgreSQL ha fortalecido la estabilidad y capacidad de gestión de datos del proyecto. Con la consolidación de rutas y servicios, se ha mejorado la modularidad y claridad del sistema.
+Motivos:
 
-Con los siguientes pasos enfocados en refactorización y documentación, el sistema quedará listo para escalar y adaptarse a nuevas funcionalidades. 🚀
+Facilitar la reutilización en otros proyectos.
+
+Mejorar la mantenibilidad del código.
+
+Centralizar operaciones complejas en un solo punto.
+
+Funciones Agrupadas:
+
+Recepción de una pregunta.
+
+Ejecución de tool calls y manejo de requires actions.
+
+Búsqueda optimizada:
+
+Redis: Primero se verifica la caché para respuestas frecuentes.
+
+PostgreSQL: Si no existe en Redis, se realiza una consulta en la base de datos relacional.
+
+Generación de prompts y respuesta final a través de OpenAI.
+
+Beneficios:
+
+La clase AssistantService es autónoma y puede ser fácilmente integrada en nuevos proyectos.
+
+La lógica completa está encapsulada y se puede probar de manera individual con Pytest.
+
+2. Refactorización del Uso de Redis
+
+Problemas Detectados:
+
+Inicialización redundante de Redis.
+
+Duplicación de lógica en varias partes del código.
+
+Solución:
+
+Redis se inicializa globalmente al iniciar la aplicación (únicamente en app.py).
+
+Las funciones guardar_cache y obtener_cache en redis_service.py asumen que la conexión global está activa.
+
+Estrategia de Búsqueda Optimizada:
+
+Se verifica la existencia de datos en Redis.
+
+Si no se encuentran, se consultan en PostgreSQL y se almacenan en Redis con una expiración de 1 hora.
+
+3. Modularización del Código
+
+Se ha eliminado la redundancia de endpoints y servicios:
+
+Redis: Los endpoints relacionados con Redis se mantienen exclusivamente en redis_routes.py.
+
+PostgreSQL: Operaciones centralizadas en postgres_service.py.
+
+AssistantService: Maneja de manera integral la interacción con OpenAI.
+
+Nuevos Archivos y Refactorización:
+
+services/assistant_service.py: Clase que encapsula toda la lógica del asistente.
+
+services/redis_service.py: Manejo centralizado de Redis.
+
+services/postgres_service.py: Manejo centralizado de PostgreSQL.
+
+🔢 Pruebas Automatizadas
+
+Problemas Detectados:
+
+Las pruebas existentes eran limitadas y no validaban la integración completa con Redis y PostgreSQL.
+
+Solución:
+
+Se amplió el archivo test_redis.py para probar:
+
+Almacenamiento en Redis.
+
+Recuperación desde Redis.
+
+Validación de expiración de claves.
+
+Nuevas pruebas para PostgreSQL en test_postgres.py:
+
+Validar la conexión.
+
+Insertar y recuperar datos.
+
+Pruebas de integración para AssistantService:
+
+Flujo completo de interacción con OpenAI.
+
+Verificación de búsqueda en Redis y PostgreSQL.
+
+💡 Beneficios de las Decisiones
+
+Reutilización:
+
+La clase AssistantService puede ser implementada fácilmente en otros proyectos.
+
+Mantenimiento:
+
+Lógica compleja centralizada facilita la detección y corrección de errores.
+
+Rendimiento:
+
+La búsqueda optimizada en Redis y PostgreSQL mejora la velocidad de respuesta.
+
+Pruebas Robustas:
+
+Las nuevas pruebas aseguran la estabilidad y el funcionamiento correcto del sistema.
+
+📝 Próximos Pasos
+
+Integrar pruebas continuas (CI/CD) con herramientas como GitHub Actions.
+
+Documentar completamente la clase AssistantService con ejemplos de uso.
+
+Monitorear el rendimiento de Redis y PostgreSQL en producción.
+
+Preparar el sistema para escalar horizontalmente en caso de incremento de usuarios.
+
+Esta estructura modular y optimizada asegura que el sistema sea escalable, eficiente y fácil de mantener, además de proporcionar una base sólida para futuros desarrollos. 🌟🚀
 

@@ -65,6 +65,7 @@ from routes.asistente_routes import asistente_bp
 from routes.pdft_routes import pdft_bp
 from routes.assistant_routes import assistant_bp
 from routes.redis_routes import redis_bp
+from routes.flujo_routes import flujo_bp
 from routes.postgres_routes import postgres_bp
 
 logger.info("Registrando blueprints...")
@@ -75,6 +76,7 @@ app.register_blueprint(asistente_bp, url_prefix="/api/asistente")
 app.register_blueprint(pdft_bp, url_prefix="/api/pdft")
 app.register_blueprint(assistant_bp, url_prefix="/api/assistant")
 app.register_blueprint(redis_bp, url_prefix="/api/redis")
+app.register_blueprint(flujo_bp, url_prefix="/api/flujo")
 app.register_blueprint(postgres_bp, url_prefix="/api/postgres")
 logger.info("✅ Todos los blueprints han sido registrados.")
 

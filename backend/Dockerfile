@@ -10,6 +10,13 @@ COPY requirements.txt .
 # Instalar dependencias
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
+#instalar wget
+RUN apt-get update && apt-get install -y wget
+
+RUN apt-get update && apt-get install -y httpie
+
+
+
 # Copiar el resto del código al contenedor
 COPY . .
 
