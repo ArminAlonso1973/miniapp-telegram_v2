@@ -1,17 +1,23 @@
 import asyncpg
 import logging
+import os
 
 logger = logging.getLogger(__name__)
+
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "postgres_service")
+POSTGRES_DB = os.getenv("POSTGRES_DB", "asistente_tributario_db")
+POSTGRES_USER = os.getenv("POSTGRES_USER", "asistente_tributario_db_user")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "3fBc0D7Chp5bll8m9m7G6L5cvPNYPCOU")
 
 
 async def connect_postgres():
     """Establece la conexión con PostgreSQL."""
     try:
         connection = await asyncpg.connect(
-            user="asistente_tributario_db_user",
-            password="3fBc0D7Chp5bll8m9m7G6L5cvPNYPCOU",
-            database="asistente_tributario_db",
-            host="postgres_service",  # Host del servicio de Postgres
+            user=POSTGRES_USER,
+            password=POSTGRES_PASSWORD,
+            database=POSTGRES_DB,
+            host=POSTGRES_HOST,
             port=5432,
         )
         logger.info("✅ Conexión a PostgreSQL establecida.")
@@ -22,24 +28,17 @@ async def connect_postgres():
 
 
 async def buscar_respuestas_postgres(keys: list):
-    """
-    Busca respuestas en PostgreSQL usando claves.
-    Args:
-        keys (list): Lista de claves a buscar.
-    Returns:
-        list: Respuestas encontradas en la base de datos.
-    """
+    """Busca respuestas en PostgreSQL usando claves."""
     if not keys:
         logger.warning("La lista de claves está vacía.")
         return []
 
     try:
-        # Cambiar localhost por postgres_service
         conn = await asyncpg.connect(
-            user="asistente_tributario_db_user",
-            password="3fBc0D7Chp5bll8m9m7G6L5cvPNYPCOU",
-            database="asistente_tributario_db",
-            host="postgres_service",  # <-- Cambiar localhost por postgres_service
+            user=POSTGRES_USER,
+            password=POSTGRES_PASSWORD,
+            database=POSTGRES_DB,
+            host=POSTGRES_HOST,
             port=5432
         )
 
@@ -57,3 +56,25 @@ async def buscar_respuestas_postgres(keys: list):
     except Exception as e:
         logger.error(f"Error buscando en PostgreSQL: {e}")
         return []
+
+
+async def almacenar_valoracion_en_postgres(pregunta_normalizada: str, respuesta: str, valoracion: str):
+    """Almacena la valoración del usuario en la base de datos."""
+    try:
+        conn = await asyncpg.connect(
+            user=POSTGRES_USER,
+            password=POSTGRES_PASSWORD,
+            database=POSTGRES_DB,
+            host=POSTGRES_HOST,
+            port=5432
+        )
+
+        query = """
+            INSERT INTO feedback (pregunta_normalizada, respuesta, valoracion, timestamp)
+            VALUES ($1, $2, $3, NOW())
+        """
+        await conn.execute(query, pregunta_normalizada, respuesta, valoracion)
+        await conn.close()
+        logger.info("✅ Valoración almacenada en PostgreSQL.")
+    except Exception as e:
+        logger.error(f"❌ Error al almacenar valoración en PostgreSQL: {e}")

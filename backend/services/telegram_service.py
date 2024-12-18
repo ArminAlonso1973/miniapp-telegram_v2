@@ -1,33 +1,63 @@
 import os
 import requests
 import logging
-from dotenv import load_dotenv
+import aiohttp
 
 logger = logging.getLogger(__name__)
-load_dotenv()
+
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 def send_message(chat_id: str, message: str) -> dict:
-    """Envía un mensaje a través de la API de Telegram."""
-    try:
-        bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-        if not bot_token:
-            logger.error("El token de Telegram no está configurado en las variables de entorno.")
-            raise ValueError("El token de Telegram no está configurado")
+    """Envía un mensaje de texto a través de la API de Telegram."""
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    payload = {"chat_id": chat_id, "text": message}
+    response = requests.post(url, json=payload)
+    response.raise_for_status()
+    result = response.json()
+    logger.info(f"Respuesta de Telegram: {result}")
+    return result
 
-        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-        payload = {
-            "chat_id": chat_id,
-            "text": message
+def send_message_with_inline_keyboard(chat_id: str, message: str, keyboard: list) -> dict:
+    """Envía un mensaje con teclado inline."""
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": message,
+        "reply_markup": {
+            "inline_keyboard": keyboard
         }
+    }
+    response = requests.post(url, json=payload)
+    response.raise_for_status()
+    result = response.json()
+    logger.info(f"Respuesta de Telegram con inline keyboard: {result}")
+    return result
 
-        logger.info(f"Enviando solicitud a Telegram: {url} con payload {payload}")
-        response = requests.post(url, json=payload)
-        response.raise_for_status()  # Lanza una excepción para códigos de error HTTP
+async def answer_callback_query(callback_query_id: str, text: str):
+    """Responde a una callback_query de Telegram."""
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/answerCallbackQuery"
+    payload = {
+        "callback_query_id": callback_query_id,
+        "text": text,
+        "show_alert": False
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json=payload) as resp:
+            resp_json = await resp.json()
+            logger.info(f"Respuesta de answerCallbackQuery: {resp_json}")
+            return resp_json
 
-        result = response.json()
-        logger.info(f"Respuesta de Telegram: {result}")
-        return result
-
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Error al enviar mensaje a Telegram: {e}")
-        return {"ok": False, "error": str(e)}
+async def edit_message_text(chat_id: int, message_id: int, text: str):
+    import aiohttp
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+    url = f"https://api.telegram.org/bot{bot_token}/editMessageText"
+    payload = {
+        "chat_id": chat_id,
+        "message_id": message_id,
+        "text": text
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json=payload) as resp:
+            resp_json = await resp.json()
+            logger.info(f"Respuesta de editMessageText: {resp_json}")
+            return resp_json
