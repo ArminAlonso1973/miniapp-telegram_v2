@@ -1,5 +1,5 @@
 from quart import Blueprint, request, jsonify
-from services.telegram_service import send_message, send_message_with_inline_keyboard, answer_callback_query
+from services.telegram_service import send_message, answer_callback_query, edit_message_text
 from services.llm_service import normalizar_consulta, generar_prompt_completo, consultar_llm_respuesta_final
 from services.redis_service import obtener_cache, guardar_cache
 from services.flujo_service import iniciar_flujo_asistente, client
@@ -43,11 +43,16 @@ async def telegram_bot():
         pregunta_normalizada = await normalizar_consulta(user_question)
         logger.info(f"Pregunta normalizada: {pregunta_normalizada}")
 
+        # Enviar mensaje preliminar (antes de cualquier procesamiento pesado)
+        preliminar_resp = send_message(str(chat_id),
+            "Estoy analizando tu pregunta tributaria...\nPor favor espera unos instantes mientras consulto la información. ⏳")
+        preliminar_message_id = preliminar_resp["result"]["message_id"]
+
         # Paso 2: Consultar cache en Redis
         respuesta_cache = await obtener_cache(pregunta_normalizada)
         if respuesta_cache:
-            # Responder directamente desde cache
-            send_message(str(chat_id), respuesta_cache)
+            # Editamos el mensaje preliminar con la respuesta final
+            await edit_message_text(chat_id, preliminar_message_id, respuesta_cache)
             return jsonify({"origen": "cache", "respuesta": respuesta_cache}), 200
 
         # Paso 3: Llamar al asistente de OpenAI para obtener los _key
@@ -61,32 +66,32 @@ async def telegram_bot():
             client=client
         )
 
-        # Extraer las keys del JSON retornado
         keys = extraer_keys_de_respuesta(respuesta_asistente)
         if not keys:
-            mensaje_sin_keys = "No se encontraron claves relacionadas en la respuesta del asistente."
-            send_message(str(chat_id), mensaje_sin_keys)
+            # Sin keys, editamos el mensaje preliminar para informar
+            await edit_message_text(chat_id, preliminar_message_id,
+                "No se encontraron claves relacionadas en la respuesta del asistente.")
             return jsonify({"origen": "openai", "mensaje": "Sin claves encontradas"}), 200
 
         # Paso 4: Consultar PostgreSQL con las keys
         respuestas_postgres = await buscar_respuestas_postgres(keys)
         if not respuestas_postgres:
-            mensaje_sin_bd = "No se encontraron datos relacionados en la base de datos."
-            send_message(str(chat_id), mensaje_sin_bd)
+            # Sin datos en BD, editamos el mensaje preliminar
+            await edit_message_text(chat_id, preliminar_message_id,
+                "No se encontraron datos relacionados en la base de datos.")
             return jsonify({"origen": "postgres", "mensaje": "Sin datos en BD"}), 200
 
         prompt_final = await generar_prompt_completo(user_question, respuestas_postgres)
         respuesta_final = await consultar_llm_respuesta_final(prompt_final)
 
         # Paso 5: Preparar interacción para valoración del usuario
-        # Generar un ID único para esta interacción
         interaction_id = str(uuid.uuid4())
 
-        # Guardar en Redis la pregunta y la respuesta final para recuperar tras la valoración
+        # Guardar en Redis la pregunta y la respuesta final para el feedback
         await guardar_cache(interaction_id, json.dumps({
             "pregunta": pregunta_normalizada,
             "respuesta": respuesta_final
-        }), expiracion=3600)  # 1 hora de expiración
+        }), expiracion=3600)
 
         # Crear inline keyboard con callback_data simple
         callback_data_like = '{"action":"like","id":"%s"}' % interaction_id
@@ -96,7 +101,9 @@ async def telegram_bot():
              {"text": "👎", "callback_data": callback_data_dislike}]
         ]
 
-        send_message_with_inline_keyboard(str(chat_id), respuesta_final, botones)
+        # Ahora editamos el mensaje preliminar reemplazándolo con la respuesta final y los botones
+        await edit_message_text(chat_id, preliminar_message_id, respuesta_final, reply_markup=botones)
+
         return jsonify({"origen": "final", "respuesta_final": respuesta_final}), 200
 
     except Exception as e:
@@ -106,6 +113,7 @@ async def telegram_bot():
 
 @telegram_bp.route('/telegram-feedback', methods=['POST'])
 async def telegram_feedback():
+    """Maneja el feedback del usuario desde los botones inline (callback_query)."""
     data = await request.get_json()
     callback_query = data.get("callback_query", {})
     if not callback_query:
@@ -113,8 +121,6 @@ async def telegram_feedback():
 
     callback_query_id = callback_query.get("id")
     message = callback_query.get("message", {})
-    chat_id = message.get("chat", {}).get("id")
-    message_id = message.get("message_id")  # Importante para editar el mensaje original
     data_callback = callback_query.get("data")
 
     try:
@@ -138,23 +144,11 @@ async def telegram_feedback():
         await almacenar_valoracion_en_postgres(pregunta_normalizada, respuesta_final, action)
 
         if action == "like":
-            # Guardar en Redis como pregunta frecuente
             await guardar_cache(pregunta_normalizada, respuesta_final, expiracion=86400)
-            # Mostrar un alert más visible:
-            await answer_callback_query(callback_query_id, text="¡Gracias por tu valoración!", show_alert=True)
-            
-            # Editar el mensaje para reflejar la valoración
-            from services.telegram_service import edit_message_text
-            nuevo_texto = f"{respuesta_final}\n\n✅ Valorada positivamente"
-            await edit_message_text(chat_id, message_id, nuevo_texto)
+            await answer_callback_query(callback_query_id, text="¡Gracias por tu valoración!")
         else:
             await answer_callback_query(callback_query_id, text="Entendido, intentaré mejorar la respuesta.")
-            # También puedes editar el mensaje para indicar valoración negativa
-            from services.telegram_service import edit_message_text
-            nuevo_texto = f"{respuesta_final}\n\n❌ Valorada negativamente"
-            await edit_message_text(chat_id, message_id, nuevo_texto)
     else:
-        await answer_callback_query(callback_query_id, text="No se encontró información para esta interacción.", show_alert=True)
+        await answer_callback_query(callback_query_id, text="No se encontró información para esta interacción.")
 
     return jsonify({"status": "ok"}), 200
-
