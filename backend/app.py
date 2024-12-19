@@ -3,6 +3,7 @@ from quart_cors import cors
 from dotenv import load_dotenv
 from services.redis_service import init_redis
 from services.postgres_service import connect_postgres
+from services.chat_service import ensure_storage_directory
 import logging
 import os
 
@@ -16,6 +17,10 @@ load_dotenv()
 # Crear la aplicación Quart
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
+
+#Verificar y crear carpeta de almacenamiento
+ensure_storage_directory()
+
 
 # Ruta raíz para verificación de estado
 @app.route('/')
@@ -67,6 +72,8 @@ from routes.assistant_routes import assistant_bp
 from routes.redis_routes import redis_bp
 from routes.flujo_routes import flujo_bp
 from routes.postgres_routes import postgres_bp
+from routes.chat_routes import chat_bp
+
 
 logger.info("Registrando blueprints...")
 app.register_blueprint(consulta_bp, url_prefix="/api")
@@ -78,6 +85,7 @@ app.register_blueprint(assistant_bp, url_prefix="/api/assistant")
 app.register_blueprint(redis_bp, url_prefix="/api/redis")
 app.register_blueprint(flujo_bp, url_prefix="/api/flujo")
 app.register_blueprint(postgres_bp, url_prefix="/api/postgres")
+app.register_blueprint(chat_bp, url_prefix="/api/chats")
 logger.info("✅ Todos los blueprints han sido registrados.")
 
 # Ejecutar la aplicación

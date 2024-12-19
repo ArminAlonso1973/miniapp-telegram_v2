@@ -78,3 +78,24 @@ async def almacenar_valoracion_en_postgres(pregunta_normalizada: str, respuesta:
         logger.info("✅ Valoración almacenada en PostgreSQL.")
     except Exception as e:
         logger.error(f"❌ Error al almacenar valoración en PostgreSQL: {e}")
+
+async def ejecutar_query(query: str, params: list = None):
+    """Ejecuta una consulta genérica en PostgreSQL."""
+    try:
+        conn = await asyncpg.connect(
+            user=POSTGRES_USER,
+            password=POSTGRES_PASSWORD,
+            database=POSTGRES_DB,
+            host=POSTGRES_HOST,
+            port=5432
+        )
+        if params:
+            result = await conn.fetch(query, *params)
+        else:
+            result = await conn.fetch(query)
+        await conn.close()
+        return result
+    except Exception as e:
+        logger.error(f"❌ Error al ejecutar query en PostgreSQL: {e}")
+        return []
+

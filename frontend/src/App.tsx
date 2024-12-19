@@ -1,5 +1,6 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
 import UploadPDF from './components/UploadPDF';
+import ChatWithAssistant from './components/ChatWithAssistant';
 
 const App = () => {
   const [message, setMessage] = useState<string>('');
@@ -46,47 +47,51 @@ const App = () => {
     setMessage(e.target.value);
   };
 
-    return (
-      <div className="min-h-screen flex flex-col bg-gray-light text-gray-dark">
-        <header className="bg-gray-dark text-gold-light py-4 text-center">
-          <h1 className="text-2xl font-bold">Mini App Administrativa</h1>
-        </header>
-    
-        <main className="flex-1 container mx-auto p-4">
-          <section className="mb-6 p-6 bg-white rounded-lg shadow-md border border-gray-dark">
-            <h2 className="text-xl font-bold text-gold-dark mb-4">Enviar mensaje al bot de Telegram</h2>
-            {error && <div className="text-red-500">{error}</div>}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <textarea
-                className="w-full p-3 border border-gray-dark rounded-md text-gray-dark focus:ring-2 focus:ring-gold"
-                placeholder="Escribe tu mensaje aquí"
-                rows={4}
-                value={message}
-                onChange={handleMessageChange}
-                required
-              />
-              <button
-                type="submit"
-                className="w-full py-2 bg-gold text-white font-bold rounded-md shadow hover:bg-gold-dark transition"
-                disabled={loading || !message.trim()}
-              >
-                {loading ? 'Enviando...' : 'Enviar Mensaje'}
-              </button>
-            </form>
-          </section>
-    
-          <section className="p-6 bg-white rounded-lg shadow-md border border-gray-dark">
-            <h2 className="text-xl font-bold text-gold-dark mb-4">Cargar y Resumir PDF</h2>
-            <UploadPDF />
-          </section>
-        </main>
-    
-        <footer className="bg-gray-dark text-gold-light py-2 text-center">
-          <p>&copy; 2024 Mini App Administrativa - Todos los derechos reservados</p>
-        </footer>
-      </div>
-    );
-    
+  return (
+    <div className="min-h-screen flex flex-col bg-gray-light text-gray-dark">
+      <header className="bg-gray-dark text-gold-light py-4 text-center">
+        <h1 className="text-2xl font-bold">Mini App Administrativa</h1>
+      </header>
+
+      <main className="flex-1 container mx-auto p-4">
+        <section className="mb-6 p-6 bg-white rounded-lg shadow-md border border-gray-dark">
+          <h2 className="text-xl font-bold text-gold-dark mb-4">Enviar mensaje al bot de Telegram</h2>
+          {error && <div className="text-red-500">{error}</div>}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <textarea
+              className="w-full p-3 border border-gray-dark rounded-md text-gray-dark focus:ring-2 focus:ring-gold"
+              placeholder="Escribe tu mensaje aquí"
+              rows={4}
+              value={message}
+              onChange={handleMessageChange}
+              required
+            />
+            <button
+              type="submit"
+              className="w-full py-2 bg-gold text-white font-bold rounded-md shadow hover:bg-gold-dark transition"
+              disabled={loading || !message.trim()}
+            >
+              {loading ? 'Enviando...' : 'Enviar Mensaje'}
+            </button>
+          </form>
+        </section>
+
+        <section className="p-6 bg-white rounded-lg shadow-md border border-gray-dark mb-6">
+          <h2 className="text-xl font-bold text-gold-dark mb-4">Cargar y Resumir PDF</h2>
+          <UploadPDF />
+        </section>
+
+        <section className="p-6 bg-white rounded-lg shadow-md border border-gray-dark">
+          <h2 className="text-xl font-bold text-gold-dark mb-4">Asistente Tributario</h2>
+          <ChatWithAssistant />
+        </section>
+      </main>
+
+      <footer className="bg-gray-dark text-gold-light py-2 text-center">
+        <p>&copy; 2024 Mini App Administrativa - Todos los derechos reservados</p>
+      </footer>
+    </div>
+  );
 };
 
 export default App;
