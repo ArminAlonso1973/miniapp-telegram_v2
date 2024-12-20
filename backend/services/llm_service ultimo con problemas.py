@@ -3,15 +3,11 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 import asyncio
+# backend/services/llm_service.py
 import logging
-from services.openai_service import openai_client  # Importa el cliente OpenAI actualizado
 import re
+from services.openai_service import openai_client, consultar_openai
 
-# Cargar variables de entorno
-load_dotenv()
-
-# Inicializar el cliente de OpenAI
-openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 async def consultar_openai(prompt: str):
     """
@@ -29,14 +25,11 @@ async def consultar_openai(prompt: str):
     except Exception as e:
         raise RuntimeError(f"Error al consultar OpenAI: {e}")
 
-# backend/services/llm_service.py
-
-
-
-logger = logging.getLogger(__name__)
 
 async def generar_prompt_completo(message: str, respuestas: list) -> str:
-    """Genera el prompt para OpenAI."""
+    """
+    Genera el prompt para OpenAI.
+    """
     try:
         prompt = (
             "Eres un experto en tributación chilena y legislación fiscal. "
@@ -44,20 +37,25 @@ async def generar_prompt_completo(message: str, respuestas: list) -> str:
             f"Pregunta: {message}\n\n"
             "Contexto:\n"
         )
+        
         for idx, respuesta in enumerate(respuestas, 1):
             prompt += (
                 f"{idx}. Pregunta: {respuesta['question']}\n"
                 f"   Respuesta: {respuesta['answer']}\n"
                 f"   Referencia legal: {respuesta['legal_reference']}\n"
             )
+        
         return prompt
     except Exception as e:
         logger.error(f"Error generando el prompt: {e}")
         return "Error al generar el prompt."
 
 async def consultar_llm_respuesta_final(prompt: str) -> str:
+    """
+    Consulta OpenAI para generar la respuesta final.
+    """
     try:
-        # Asegurarse de usar await aquí
+        # Utilizamos la función consultar_openai del servicio OpenAI
         respuesta = await consultar_openai(prompt)
         return respuesta
     except Exception as e:
@@ -75,7 +73,3 @@ async def normalizar_consulta(consulta: str) -> str:
         return consulta
     except Exception as e:
         raise ValueError(f"Error al normalizar consulta: {str(e)}")
-
-
-
-

@@ -1,4 +1,6 @@
-from quart import Blueprint, request, jsonify, send_file
+# backend/routes/chat_routes.py
+
+from quart import Blueprint, request, jsonify, send_file, Response
 from services.chat_service import buscar_chats, obtener_chat_por_id, descargar_chat
 import logging
 import os
@@ -12,7 +14,9 @@ async def buscar_chats_endpoint():
     """Buscar chats con filtros."""
     try:
         query = request.args.get('query', '')
-        user_id = request.args.get('user_id', None)
+        user_id = request.args.get('user_id', None, type=int)
+        if user_id is None:
+            return jsonify({"error": "Parámetro 'user_id' es requerido y debe ser un entero."}), 400
         chats = await buscar_chats(query, user_id)
         return jsonify(chats), 200
     except Exception as e:
@@ -36,6 +40,10 @@ async def descargar_chat_endpoint(chat_id):
     """Descargar chat como archivo de texto."""
     try:
         file_path = await descargar_chat(chat_id)
+        # Asegurarse de que el archivo existe
+        if not os.path.exists(file_path):
+            logger.warning(f"Archivo no encontrado: {file_path}")
+            return jsonify({"error": "Archivo no encontrado"}), 404
         return await send_file(file_path, as_attachment=True)
     except FileNotFoundError:
         return jsonify({"error": "Archivo no encontrado"}), 404

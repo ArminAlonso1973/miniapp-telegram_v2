@@ -1,3 +1,5 @@
+# backend/routes/telegram_routes.py
+
 from quart import Blueprint, request, jsonify
 from services.telegram_service import send_message, answer_callback_query, edit_message_text
 from services.llm_service import normalizar_consulta, generar_prompt_completo, consultar_llm_respuesta_final
@@ -31,13 +33,19 @@ async def telegram_bot():
     try:
         data = await request.get_json()
         message = data.get('message', {})
+        
+        # Verificar que 'message' es un diccionario
+        if not isinstance(message, dict):
+            logger.error("El campo 'message' debe ser un diccionario.")
+            return jsonify({"error": "Datos del mensaje inválidos"}), 400
+        
         chat = message.get('chat', {})
         chat_id = chat.get('id')
         user_question = message.get('text')
 
         if not chat_id or not user_question:
             logger.error("No se pudo extraer chat_id o texto del mensaje de Telegram")
-            return jsonify({"error": "Datos del mensaje inválidos"}), 400
+            return jsonify({"error": "No se proporcionó un mensaje."}), 400
 
         # Paso 1: Normalizar la pregunta
         pregunta_normalizada = await normalizar_consulta(user_question)

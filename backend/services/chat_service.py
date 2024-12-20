@@ -1,3 +1,5 @@
+# backend/services/chat_service.py
+
 import os
 import json
 from datetime import datetime
@@ -41,12 +43,20 @@ async def buscar_chats(query, user_id=None):
         logger.error(f"Error al buscar chats: {e}")
         return []
 
-
 async def obtener_chat_por_id(chat_id):
     """Obtener el contenido completo de un chat por ID."""
-    sql = "SELECT * FROM chats WHERE id = %s"
-    result = await ejecutar_query(sql, [chat_id])
-    return result[0] if result else None
+    logger.info(f"Buscando chat con ID: {chat_id}")
+    try:
+        sql = "SELECT * FROM chats WHERE id = $1"
+        result = await ejecutar_query(sql, [chat_id])
+        if result:
+            logger.info(f"Chat encontrado: {result[0]}")
+            return dict(result[0])  # Convertir Record a dict
+        logger.warning(f"No se encontró chat con ID: {chat_id}")
+        return None
+    except Exception as e:
+        logger.error(f"Error al obtener chat por ID {chat_id}: {e}")
+        raise
 
 async def descargar_chat(chat_id):
     """Generar archivo de texto para descargar un chat."""
@@ -60,3 +70,11 @@ async def descargar_chat(chat_id):
         await file.write(f"Fecha: {chat['created_at']}\n\n")
         await file.write(chat['content'])
     return file_path
+
+async def manejar_mensaje_telegram(chat_id: str, message: str) -> dict:
+    """Procesa el mensaje recibido y retorna una respuesta."""
+    # Implementación de la lógica
+    return {
+        "origen": "final",
+        "respuesta_final": "Respuesta procesada."
+    }
