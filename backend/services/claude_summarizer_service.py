@@ -5,7 +5,9 @@ from typing import List, Dict
 from dotenv import load_dotenv
 import anthropic
 import pypdf
-from quart import Quart, request, jsonify
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ClaudeSummarizer:
     def __init__(self, chunk_size: int = 1024, batch_size: int = 4):
@@ -74,7 +76,7 @@ class ClaudeSummarizer:
             )
             return response.content[0].text
         except Exception as e:
-            print(f"Error al resumir chunk: {e}")
+            logger.error(f"Error al resumir chunk: {e}")
             return ""
 
     async def summarize_document(self, pdf_path: str) -> Dict[str, str]:
@@ -102,38 +104,3 @@ class ClaudeSummarizer:
             "summary_length": len(final_summary),
             "summary": final_summary
         }
-
-# Aplicación Quart
-app = Quart(__name__)
-summarizer = ClaudeSummarizer()
-
-@app.route('/summarize', methods=['POST'])
-async def summarize():
-    try:
-        # Recibir archivo PDF
-        form = await request.form
-        files = await request.files
-        pdf_file = files.get('pdf')
-        
-        if not pdf_file:
-            return jsonify({"error": "No se proporcionó archivo PDF"}), 400
-        
-        # Guardar archivo temporalmente
-        pdf_path = f"temp_{pdf_file.filename}"
-        await pdf_file.save(pdf_path)
-        
-        try:
-            # Generar resumen asincrónico
-            resultado = await summarizer.summarize_document(pdf_path)
-            return jsonify(resultado)
-        finally:
-            # Eliminar archivo temporal
-            if os.path.exists(pdf_path):
-                os.remove(pdf_path)
-    
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# Configuración para ejecución
-if __name__ == '__main__':
-    app.run(debug=True)

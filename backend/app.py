@@ -6,7 +6,9 @@ from services.postgres_service import connect_postgres
 from services.chat_service import ensure_storage_directory
 import logging
 import os
+import sys
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # Configuración del logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -73,6 +75,7 @@ from routes.flujo_routes import flujo_bp
 from routes.postgres_routes import postgres_bp
 from routes.chat_routes import chat_bp
 from routes.informe_routes import informe_bp
+from routes.summarize_routes import summarize_bp
 
 logger.info("Registrando blueprints...")
 app.register_blueprint(consulta_bp, url_prefix="/api")
@@ -86,6 +89,7 @@ app.register_blueprint(flujo_bp, url_prefix="/api/flujo")
 app.register_blueprint(postgres_bp, url_prefix="/api/postgres")
 app.register_blueprint(chat_bp, url_prefix="/api/chats")
 app.register_blueprint(informe_bp, url_prefix="/api/informe")
+app.register_blueprint(summarize_bp, url_prefix="/api/summarize")
 logger.info("✅ Todos los blueprints han sido registrados.")
 
 # Ejecutar la aplicación

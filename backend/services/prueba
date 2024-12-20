@@ -87,7 +87,7 @@ from quart import Quart, request, jsonify
 from quart_cors import cors
 import os
 from dotenv import load_dotenv
-from services.ClaudeSummarizer import ClaudeSummarizer  # Asegúrate de que la ruta sea correcta
+from services.claude_summarizer_service import ClaudeSummarizer  # Asegúrate de que la ruta sea correcta
 import asyncio
 from werkzeug.utils import secure_filename
 

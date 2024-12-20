@@ -15,6 +15,7 @@ from routes.pdft_routes import pdft_bp
 from routes.assistant_routes import assistant_bp
 from routes.chat_routes import chat_bp
 from routes.redis_routes import redis_bp
+from routes.summarize_routes import summarize_bp
 from dotenv import load_dotenv
 
 # Configurar logging para rastrear el flujo de las pruebas
@@ -50,7 +51,7 @@ async def app():
     app.register_blueprint(assistant_bp, url_prefix="/api/assistant")
     app.register_blueprint(chat_bp, url_prefix="/api/chats")
     app.register_blueprint(redis_bp, url_prefix="/api/redis")
-    # Registrar otros blueprints según sea necesario
+    app.register_blueprint(summarize_bp)  # Registrar el blueprint de summarize
 
     logger.info("Fixture 'app' creada correctamente.")
     return app

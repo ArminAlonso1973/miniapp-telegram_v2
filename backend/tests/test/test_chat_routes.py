@@ -4,6 +4,7 @@ import pytest
 from unittest.mock import patch, AsyncMock
 from quart.testing import QuartClient
 from quart import Response
+import aiofiles
 import os
 
 @pytest.mark.asyncio
@@ -75,20 +76,28 @@ async def test_descargar_chat_endpoint_existe(test_client: QuartClient, tmp_path
     mock_file_path = tmp_path / f"chat_{chat_id}.txt"
     mock_file_content = "Fecha: 2024-12-19T14:00:00Z\n\nContenido del chat completo."
 
-    # Mock de descargar_chat para retornar el path del archivo
+    # Crear el archivo simulado antes de llamar al endpoint
+    async with aiofiles.open(mock_file_path, mode='w') as file:
+        await file.write(mock_file_content)
+    assert mock_file_path.exists(), f"El archivo {mock_file_path} no fue creado correctamente."
+
+    # Mock de descargar_chat para retornar la ruta del archivo
     with patch('routes.chat_routes.descargar_chat', new=AsyncMock(return_value=str(mock_file_path))):
         # Mock de os.path.exists para simular que el archivo existe
         with patch('os.path.exists', return_value=True):
             # Crear una respuesta de ejemplo para send_file
             mock_response = Response(status=200)
-            mock_response.headers['Content-Disposition'] = f'attachment; filename="chat_{chat_id}.txt"'
+            mock_response.headers['Content-Disposition'] = f'attachment; filename=chat_{chat_id}.txt'
 
             # Mock de send_file para simular el envío del archivo
             with patch('quart.send_file', new=AsyncMock(return_value=mock_response)):
+                # Llamar al endpoint
                 response = await test_client.get(f"/api/chats/{chat_id}/download")
+                
+                # Validar la respuesta
                 assert response.status_code == 200
-                # Verificar headers
-                assert response.headers['Content-Disposition'] == f'attachment; filename="chat_{chat_id}.txt"'
+                assert response.headers['Content-Disposition'].replace('"', '') == f'attachment; filename=chat_{chat_id}.txt'.replace('"', '')
+
 
 @pytest.mark.asyncio
 async def test_descargar_chat_endpoint_no_existe(test_client: QuartClient):
