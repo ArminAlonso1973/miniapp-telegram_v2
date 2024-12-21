@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import TypewriterEffect from './TypewriterEffect';
+import SaveButton from "@/components/ui/SaveButton"; // Importa el botón genérico
 
 const ChatWithAssistant: React.FC = () => {
   const [question, setQuestion] = useState('');
@@ -8,6 +9,7 @@ const ChatWithAssistant: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [useTypewriter, setUseTypewriter] = useState(true);
+  const [isSaved, setIsSaved] = useState(false); // Estado para controlar si la respuesta está guardada
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +30,7 @@ const ChatWithAssistant: React.FC = () => {
 
       if (response.ok) {
         setAnswer(data.respuesta || 'No se obtuvo respuesta.');
+        setIsSaved(false); // Reinicia el estado de guardado al recibir una nueva respuesta
       } else {
         setError(`Error: ${data.error || 'Error desconocido'}`);
       }
@@ -75,6 +78,11 @@ const ChatWithAssistant: React.FC = () => {
           ) : (
             <ReactMarkdown>{answer}</ReactMarkdown>
           )}
+          {/* Botón Guardar */}
+          <SaveButton
+            isSaved={isSaved} // Estado actual del guardado
+            onToggle={() => setIsSaved(!isSaved)} // Alterna el estado de guardado
+          />
         </div>
       )}
     </div>
