@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 const HomePage = () => (
   <div className="min-h-screen bg-gray-900 p-6">

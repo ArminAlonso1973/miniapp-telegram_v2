@@ -1,21 +1,25 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2020", // Define el estándar de JavaScript para el código generado
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ES2020", "DOM", "DOM.Iterable"], // Incluye librerías modernas
     "module": "ESNext",
-    "skipLibCheck": true,
+    "skipLibCheck": true, // Evita verificar tipos de módulos externos
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "resolveJsonModule": true, // Permite importar archivos JSON
+    "isolatedModules": true, // Requerido para la compatibilidad con `vite`
+    "noEmit": true, // Evita generar archivos JS al compilar
+    "jsx": "react-jsx", // Configuración JSX moderna para React
+    "strict": true, // Habilita todas las opciones estrictas
+    "baseUrl": "./", // Necesario para configurar las rutas absolutas
+    "paths": {
+      "@/*": ["src/*"] // Define alias para rutas absolutas
+    },
+    "noUnusedLocals": true, // Marca variables locales no utilizadas como error
+    "noUnusedParameters": true, // Marca parámetros no utilizados como error
+    "noFallthroughCasesInSwitch": true // Evita errores de "fallthrough" en switch
   },
-  "include": ["src", "vite-env.d.ts"],  // Arreglo combinado
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": ["src", "vite-env.d.ts"], // Asegúrate de incluir todos los archivos fuente
+  "references": [{ "path": "./tsconfig.node.json" }] // Referencia a la configuración para Node.js
 }

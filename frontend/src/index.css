@@ -1,21 +1,30 @@
+/* Tailwind base styles */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Estilos personalizados globales */
+/* Global styles */
 :root {
+  --color-primary: #213547;
+  --color-secondary: #747bff;
+  --color-background-dark: #242424;
+  --color-background-light: #ffffff;
+  --color-text-light: rgba(255, 255, 255, 0.87);
+  --color-text-dark: #213547;
+
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  @apply m-0 min-w-[320px] min-h-screen flex items-center justify-center bg-gray-900 text-gray-200;
 }
 
 a {
@@ -25,15 +34,11 @@ a:hover {
   @apply text-indigo-400;
 }
 
-body {
-  @apply m-0 flex items-center justify-center min-w-[320px] min-h-screen;
-}
-
 h1 {
   @apply text-4xl font-bold leading-tight;
 }
 
-/* Botones */
+/* Buttons */
 button {
   @apply rounded-lg border border-transparent px-4 py-2 text-base font-medium bg-gray-800 text-white cursor-pointer transition-colors duration-200;
 }
@@ -45,35 +50,31 @@ button:disabled {
 }
 button:focus,
 button:focus-visible {
-  @apply outline outline-4 outline-offset-2 focus:outline-indigo-500;
+  @apply outline-none ring-2 ring-offset-2 ring-indigo-500;
 }
 
-/* Formularios */
+/* Forms */
 textarea {
   @apply w-full max-w-lg p-3 border-2 border-gray-300 rounded-lg text-base resize-y;
 }
 
-/* Contenedor principal */
+/* Containers */
 .container {
   @apply max-w-4xl mx-auto p-6 text-center;
 }
-
-/* Encabezado */
 .app-header {
   @apply bg-blue-600 text-white text-center py-4;
 }
-
-/* Sección principal */
 .app-main {
   @apply flex flex-col items-center gap-6 py-8;
 }
 
-/* Sección de carga de PDF */
+/* PDF Upload Section */
 .pdf-section {
   @apply mb-10;
 }
 
-/* Mensajes de error */
+/* Error Messages */
 .error-message {
   @apply text-red-700 bg-red-200 border border-red-400 p-3 rounded-lg mb-5;
 }
@@ -83,15 +84,22 @@ textarea {
   @apply text-center bg-gray-100 py-3;
 }
 
+/* Light mode adjustments */
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    --color-primary: #213547;
+    --color-secondary: #747bff;
+    --color-background-dark: #ffffff;
+    --color-text-light: #213547;
+    --color-text-dark: #213547;
+  }
+  body {
+    @apply bg-white text-gray-900;
   }
   a:hover {
-    color: #747bff;
+    @apply text-indigo-700;
   }
   button {
-    @apply bg-gray-100;
+    @apply bg-gray-100 text-gray-800;
   }
 }

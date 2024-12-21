@@ -1,11 +1,9 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-    readonly VITE_BACKEND_URL: string;
-    readonly VITE_TELEGRAM_CHAT_ID: string;
-  }
-  
-  interface ImportMeta {
-    readonly env: ImportMetaEnv;
-  }
-  
+  readonly VITE_BACKEND_URL: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}

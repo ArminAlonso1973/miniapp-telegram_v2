@@ -12,8 +12,10 @@ module.exports = {
         },
         gray: {
           light: '#F5F5F5',
+          100: '#F5F5F5', // Agrega extensiones específicas
+          200: '#E5E5E5',
           DEFAULT: '#B0B0B0',
-          dark: '#333333',
+          800: '#333333',
         },
       },
     },
