@@ -3,10 +3,11 @@ import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import AssistantPage from './pages/AssistantPage';
 import LegalTextsSystem from './components/LegalTextsSystem';
+import ReportGeneratorDemo from './components/ReportGeneratorDemo';
 
 const App = () => {
   // Controla la navegación entre páginas
-  const [currentPage, setCurrentPage] = useState<'login' | 'home' | 'assistant' | 'legal-library'>('login');
+  const [currentPage, setCurrentPage] = useState<'login' | 'home' | 'assistant' | 'legal-library' | 'report-generator'>('login');
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -31,6 +32,11 @@ const App = () => {
           onBack={() => setCurrentPage('home')} // Vuelve al menú principal
           onHome={() => setCurrentPage('home')} // Va al inicio
         />
+      )}
+
+      {/* Página del generador de informes */}
+      {currentPage === 'report-generator' && (
+        <ReportGeneratorDemo />
       )}
     </div>
   );
