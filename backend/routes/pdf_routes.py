@@ -33,14 +33,9 @@ async def upload_pdf():
 
         summarizer = ClaudeSummarizer()
         summary_result = await summarizer.summarize_document(file_path)
+        
         logger.info("Resumen generado exitosamente.")
-        return jsonify({
-            "status": "success",
-            "summary": summary_result["summary"],
-            "original_length": summary_result["original_length"],
-            "summary_length": summary_result["summary_length"],
-        })
+        return jsonify(summary_result)
     except Exception as e:
         logger.exception("Error al procesar el archivo:")
         return jsonify({"error": str(e)}), 500
-

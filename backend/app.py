@@ -76,6 +76,10 @@ from routes.postgres_routes import postgres_bp
 from routes.chat_routes import chat_bp
 from routes.informe_routes import informe_bp
 from routes.summarize_routes import summarize_bp
+from routes.legal_texts_routes import legal_texts_bp
+
+
+
 
 logger.info("Registrando blueprints...")
 app.register_blueprint(consulta_bp, url_prefix="/api")
@@ -90,6 +94,7 @@ app.register_blueprint(postgres_bp, url_prefix="/api/postgres")
 app.register_blueprint(chat_bp, url_prefix="/api/chats")
 app.register_blueprint(informe_bp, url_prefix="/api/informe")
 app.register_blueprint(summarize_bp, url_prefix="/api/summarize")
+app.register_blueprint(legal_texts_bp, url_prefix="/api/legal-texts")
 logger.info("✅ Todos los blueprints han sido registrados.")
 
 # Ejecutar la aplicación
